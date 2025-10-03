@@ -2,16 +2,17 @@ import Link from "next/link";
 import React, { ReactNode } from "react";
 import {
   FaWater,
-  FaShoePrints,
-  FaHandsHelping,
+  FaWalking,
+  FaHands,
   FaRunning,
   FaSpa,
-  FaPaintBrush,
   FaShieldAlt,
   FaDumbbell,
-  FaLeaf,
-  FaAmbulance,
+  FaNutritionix,
+  FaBaby,
 } from "react-icons/fa";
+import {TbPhysotherapist, TbMassage} from "react-icons/tb";
+import { GiLipstick } from "react-icons/gi";
 
 interface Servicio {
   slug: string;
@@ -22,32 +23,32 @@ interface Servicio {
 
 const servicios: Servicio[] = [
   { slug: "agua", icon: <FaWater />, label: "Estimulación en agua", color: "primary" },
-  { slug: "piso", icon: <FaShoePrints />, label: "Estimulación en piso", color: "secondary" },
-  { slug: "quiropractica", icon: <FaHandsHelping />, label: "Quiropráctica", color: "tertiary" },
-  { slug: "fisioterapia", icon: <FaRunning />, label: "Fisioterapia", color: "primary" },
+  { slug: "piso", icon: <FaWalking />, label: "Estimulación en piso", color: "secondary" },
+  { slug: "quiropractica", icon: <TbMassage />, label: "Quiropráctica", color: "tertiary" },
+  { slug: "fisioterapia", icon: <TbPhysotherapist />, label: "Fisioterapia", color: "primary" },
   { slug: "masajes", icon: <FaSpa />, label: "Masajes", color: "secondary" },
-  { slug: "cosmetologia", icon: <FaPaintBrush />, label: "Cosmetología", color: "tertiary" },
+  { slug: "cosmetologia", icon: <GiLipstick />, label: "Cosmetología", color: "tertiary" },
   { slug: "prevencion-lesiones", icon: <FaShieldAlt />, label: "Prevención de lesiones", color: "primary" },
   { slug: "preparacion-fisica", icon: <FaDumbbell />, label: "Preparación física", color: "secondary" },
-  { slug: "nutricion", icon: <FaLeaf />, label: "Nutrición", color: "tertiary" },
-  { slug: "medicina-rehabilitacion", icon: <FaAmbulance />, label: "Medicina en rehabilitación", color: "primary" },
+  { slug: "nutricion", icon: <FaNutritionix />, label: "Nutrición", color: "tertiary" },
+  { slug: "terapia-post-vacuna", icon: <FaBaby />, label: "Terapia post vacuna", color: "primary" },
 ];
 
 export default function NuestrosServicios() {
   return (
-    <section className="services-grid section-gray">
+    <section className="services-grid">
       <div className="container">
-        <div className="row g-4">
+        <h2 className="services-title">Nuestros servicios</h2>
+        <div className="services-list">
           {servicios.map((s) => (
-            <div key={s.slug} className="col-6 col-sm-4 col-md-3">
-              <Link
-                href={`/dashboard?tab=reservar&servicio=${s.slug}`}
-                className={`service-btn service-${s.color}`}
-              >
-                <span className="icon">{s.icon}</span>
-                <span className="label">{s.label}</span>
-              </Link>
-            </div>
+            <Link
+              key={s.slug}
+              href={`/dashboard?tab=reservar&servicio=${s.slug}`}
+              className={`service-btn service-${s.color}`}
+            >
+              <span className="icon-circle">{s.icon}</span>
+              <span className="label">{s.label}</span>
+            </Link>
           ))}
         </div>
       </div>

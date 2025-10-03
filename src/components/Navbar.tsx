@@ -5,8 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Navbar as BSNavbar, Nav, Container, NavDropdown } from "react-bootstrap";
-import { FaInfoCircle, FaCalendarAlt, FaSignInAlt, FaUser } from "react-icons/fa";
+import {
+  Navbar as BSNavbar,
+  Nav,
+  Container,
+  NavDropdown,
+} from "react-bootstrap";
+import {
+  FaInfoCircle,
+  FaCalendarAlt,
+  FaSignInAlt,
+  FaUser,
+} from "react-icons/fa";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -27,14 +37,28 @@ export default function Navbar() {
     }
   };
 
+  const goToLogin = () => {
+    router.push("/login");
+  };
+
   return (
     <BSNavbar
       sticky="top"
       expand="lg"
       className={scrolled ? "navbar-scrolled" : "navbar-base"}
+      style={{
+        transition: "background 0.3s, box-shadow 0.3s",
+        boxShadow: scrolled
+          ? "0 2px 10px rgba(96,186,194,0.09)"
+          : undefined,
+      }}
     >
       <Container>
-        <Link href="/" className="navbar-brand d-flex align-items-center gap-2">
+        <Link
+          href="/"
+          className="navbar-brand d-flex align-items-center gap-2"
+          style={{ minWidth: 125 }}
+        >
           <Image
             src="/images/logo_bloom_white.png"
             alt="Logo Bloom"
@@ -42,34 +66,69 @@ export default function Navbar() {
             height={150}
             className="logo-img"
             priority
+            style={{
+              width: 120,
+              height: "auto",
+              objectFit: "contain",
+            }}
           />
         </Link>
 
         <BSNavbar.Toggle aria-controls="navbar-nav" />
         <BSNavbar.Collapse id="navbar-nav">
           <Nav className="ms-auto gap-3 align-items-center">
-            {/* Botón Agendar */}
+            {/* Botón/enlace a Reservar */}
             <button
               type="button"
-              className="nav-link btn btn-link d-flex align-items-center"
+              className="btn btn-reservar d-flex align-items-center"
+              style={{
+                background:
+                  "linear-gradient(90deg, #aee6e8 0%, #e7bbee 100%)",
+                color: "#35594a",
+                border: "none",
+                borderRadius: 18,
+                fontWeight: 700,
+                fontSize: "1.03rem",
+                boxShadow: "0 6px 18px #60bac22a",
+                padding: "0.65rem 1.5rem",
+                transition: "box-shadow .14s, transform .12s",
+                letterSpacing: "-.5px",
+                marginRight: 3,
+                gap: 7,
+              }}
               onClick={goToReservas}
+              tabIndex={0}
             >
-              <FaCalendarAlt className="me-1" />
-              Agendar
+              <FaCalendarAlt className="me-1" style={{ fontSize: "1.15em" }} />
+              Reservar
             </button>
 
-            {/* Enlace Nosotros */}
-            <Link href="/nosotros" className="nav-link d-flex align-items-center">
-              <FaInfoCircle className="me-1" />
-              Nosotros
-            </Link>
-
-            {/* Enlace Iniciar sesión */}
+            {/* Botón de Iniciar sesión (solo si NO hay sesión) */}
             {!session && (
-              <Link href="/login" className="nav-link d-flex align-items-center">
-                <FaSignInAlt className="me-1" />
+              <button
+                type="button"
+                className="btn btn-reservar d-flex align-items-center"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #aee6e8 0%, #e7bbee 100%)",
+                  color: "#35594a",
+                  border: "none",
+                  borderRadius: 18,
+                  fontWeight: 700,
+                  fontSize: "1.03rem",
+                  boxShadow: "0 6px 18px #60bac22a",
+                  padding: "0.65rem 1.5rem",
+                  transition: "box-shadow .14s, transform .12s",
+                  letterSpacing: "-.5px",
+                  marginRight: 3,
+                  gap: 7,
+                }}
+                onClick={goToLogin}
+                tabIndex={0}
+              >
+                <FaSignInAlt className="me-1" style={{ fontSize: "1.13em" }} />
                 Iniciar sesión
-              </Link>
+              </button>
             )}
 
             {/* Dropdown para usuarios autenticados */}
@@ -105,7 +164,24 @@ export default function Navbar() {
           </Nav>
         </BSNavbar.Collapse>
       </Container>
+
+      {/* Estilo adicional rápido para ambos botones */}
+      <style jsx global>{`
+        .btn.btn-reservar:hover,
+        .btn.btn-reservar:focus {
+          box-shadow: 0 12px 30px #aee6e888;
+          background: linear-gradient(90deg, #e7bbee 10%, #aee6e8 100%);
+          color: #35594a;
+          transform: translateY(-2px) scale(1.03);
+        }
+        @media (max-width: 700px) {
+          .btn.btn-reservar {
+            font-size: 1rem;
+            padding: 0.59rem 1.15rem;
+            margin-top: 9px;
+          }
+        }
+      `}</style>
     </BSNavbar>
   );
 }
-// quiero que eliminemos "agendar" del navbar y lo cambiemos por "reservas" y que el icono sea un calendario

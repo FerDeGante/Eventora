@@ -2,10 +2,8 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
-
 import NuestrosServicios from '@/components/NuestrosServicios'
-import PoolSection from '@/components/PoolSection'
-import ContactForm from '@/components/ContactForm'
+import AlbercaSection from '@/components/AlbercaSection'
 
 const Home: NextPage = () => {
   const { data: session } = useSession()
@@ -20,45 +18,55 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Bloom Fisio | Reserva tu cita</title>
-        <meta
-          name="description"
-          content="Reserva tu sesión de fisioterapia de forma fácil y segura en Bloom Fisio."
-        />
+        <title>Bloom Fisio | Estimulación Acuática en Cuernavaca</title>
+        <meta name="description" content="El refugio líder en estimulación acuática y fisioterapia en Cuernavaca. Alberca única, climatizada y segura para bebés y adultos." />
         <link rel="icon" href="/images/logo_bloom_clean.png" />
       </Head>
+      {/* Navbar se inyecta globalmente */}
 
-      {/* El Navbar/Footer global lo inyecta _app.tsx */}
+      {/* HERO */}
+     <header className="bloom-hero">
+  <div className="bloom-hero-flex">
+    <div className="bloom-hero-photo left">
+      <img src="/images/estimulación_acuatica_2.png" alt="Clase real en Bloom" className="bloom-polaroid" />
+    </div>
+    <div className="bloom-hero-content">
+      <img src="/images/logo_bloom_clean.png" alt="Bloom Fisio Logo" className="bloom-hero-logo" />
+      <h1 className="bloom-hero-title">
+        Somos el centro líder en<br />
+        <span className="bloom-highlight">estimulación temprana acuática</span> <br />
+        y fisioterapia en Cuernavaca
+      </h1>
+      <button onClick={handleHero} className="bloom-hero-btn">
+        Reserva tu cita ahora
+      </button>
+    </div>
+    <div className="bloom-hero-photo right">
+      <img src="/images/pool_baby_animated.png" alt="Fisioterapeuta y bebé en piscina" className="bloom-polaroid" />
+    </div>
+  </div>
+</header>
 
-      {/* Hero vacío para mostrar la imagen completa */}
-      <header className="hero">
-       <div className="hero-content d-flex align-items-center justify-content-center">
-         </div>
-      </header>
 
-      {/* Subhero: texto y botón */}
-      <section id="subhero" className="subhero text-center py-5">
-        <h2 className="fw-bold mb-3">Aumenta la calidad de vida en tu familia</h2>
-        <p className="lead mb-4">
-          Reserva tu sesión de fisioterapia de forma fácil y segura.
-        </p>
-        <button onClick={handleHero} className="btn-hero">
-          Agendar tu cita
-          <span className="underline" />
-        </button>
+      {/* NUESTROS SERVICIOS */}
+      <section className="bloom-servicios">
+        <NuestrosServicios />
       </section>
 
-      <NuestrosServicios />
-      <PoolSection />
+      {/* NUESTRA ALBERCA */}
+      <AlbercaSection />
 
-      <section className="container py-5 text-center">
-        <h2 className="mb-4">Recibe tips de bienestar y ofertas exclusivas</h2>
-        <div className="mx-auto" style={{ maxWidth: 480 }}>
-          <ContactForm />
-        </div>
+      {/* Newsletter */}
+      <section className="bloom-newsletter">
+        <h2>Recibe tips de bienestar y ofertas exclusivas</h2>
+        <form className="newsletter-form">
+          <input type="text" placeholder="Tu nombre" name="nombre" autoComplete="off" />
+          <input type="email" placeholder="Tu correo" name="correo" autoComplete="off" />
+          <button type="submit">Enviar</button>
+        </form>
       </section>
 
-      {/* El Footer global lo inyecta _app.tsx */}
+      {/* Footer global lo inyecta _app.tsx */}
     </>
   )
 }

@@ -1,63 +1,68 @@
+// src/components/Footer.tsx
 import Link from "next/link";
 import Image from "next/image";
-import { FaInstagram, FaMapMarkerAlt, FaPhoneAlt, FaFileContract } from "react-icons/fa";
+import { FaInstagram, FaTwitter, FaFacebook, FaEnvelope } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="footer py-5">
-      <div className="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
-        {/* Izquierda */}
-        <div className="d-flex align-items-center gap-3">
+    <footer className="footer-bloom">
+      <div className="footer-bloom-container">
+        <div className="footer-bloom-col logo-col">
           <Image
             src="/images/logo_bloom_clean.png"
             alt="Bloom"
-            width={105}
-            height={105}
-            className="footer-logo"
+            width={180}
+            height={180}
+            className="footer-bloom-logo"
           />
-          <span>© 2025 Bloom Fisio – Todos los derechos reservados.</span>
-          <p>
-          Creado por{" "}
-          <a href="https://de-gante.com/" target="_blank" rel="noopener noreferrer" className="footer-link">
-            De Gante®
-          </a>.
-        </p>
         </div>
-
-        {/* Centro: ubicación + teléfono + Instagram */}
-        <div className="text-center">
-          <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
-            <FaMapMarkerAlt />  
-            <Link
-              href="https://maps.app.goo.gl/vfEZmEJJ3XpMsPHW7"
-              target="_blank"
-              className="footer-link"
-            >
-              Plaza San Juan piso 1 local B, Cuernavaca, Morelos
-            </Link>
-          </div>
-          <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
-            <FaPhoneAlt /> 
-            <a href="tel:+527772154841" className="footer-link">
-              📲 777 215 4841
-            </a>
-          </div>
-          <div className="d-flex align-items-center justify-content-center gap-2">
-            <span>Síguenos:</span>
-            <Link
-              href="https://www.instagram.com/bloom.fisiomx"
-              target="_blank"
-              className="footer-icon"
-            >
-              <FaInstagram size={24} />
-            </Link>
+        <div className="footer-bloom-col nav-col">
+          <nav>
+            <ul>
+              <li>
+                <Link href="/login">
+                  Inicia sesión
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard?tab=reservar">
+                  Reserva
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div className="footer-bloom-col info-col">
+          <div className="footer-bloom-info">
+            <p>Av. San Juan 77-Piso 1, Local 2, Chapultepec, 62450 Cuernavaca, Mor.</p>
+            <p>
+              <a href="mailto:info@bloomfisio.com" className="footer-bloom-link">
+                info@bbloomfisio.com
+              </a>
+            </p>
+            <div className="footer-bloom-socials">
+              <a href="https://www.facebook.com/share/1CV1nbzusA/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="footer-bloom-social facebook"><FaFacebook /></a>
+              <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" className="footer-bloom-social twitter"><FaTwitter /></a>
+              <a href="https://instagram.com/bloom.fisiomx" target="_blank" rel="noopener noreferrer" className="footer-bloom-social instagram"><FaInstagram /></a>
+              <a href="mailto:info@bloomfisio.com" className="footer-bloom-social email"><FaEnvelope /></a>
+            </div>
           </div>
         </div>
-
-        {/* Derecha: términos */}
-        <Link href="/terminos" className="d-flex align-items-center footer-link">
-          <FaFileContract className="me-1" /> Términos y condiciones
-        </Link>
+      </div>
+      <div className="footer-bloom-bottom">
+        <span>© 2024 Bloom Fisioterapia. Todos los derechos reservados.</span>
+        <span>
+          {" "}Creado por{" "}
+          <a
+            href="https://de-gante.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-bloom-link"
+            style={{ fontWeight: "bold", color: "#8e44ad" }}
+          >
+            De Gante ® 
+          </a>
+        </span>
       </div>
     </footer>
   );

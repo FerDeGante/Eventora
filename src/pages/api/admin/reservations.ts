@@ -1,60 +1,69 @@
 // src/pages/api/admin/reservations.ts
-
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import prisma from "@/lib/prisma";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session?.user?.id) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  const me = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (me?.role !== "ADMIN") {
-    return res.status(403).json({ error: "Forbidden" });
-  }
+// Utilidades
+const isAguaOPiso = (name: string) => /agua/i.test(name) || /piso/i.test(name);
+const normalizeToMinute = (d: Date) => {
+  const n = new Date(d);
+  n.setSeconds(0, 0);
+  return n;
+};
 
-  // ----------- POST: crear reservación -----------
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Auth + rol
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.id) return res.status(401).json({ error: "Unauthorized" });
+
+  const me = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (me?.role !== "ADMIN") return res.status(403).json({ error: "Forbidden" });
+
+  // ---------- CREAR RESERVACIÓN ----------
   if (req.method === "POST") {
     const {
       userId,
       packageId,
-      date, // ISO string
-      paymentMethod,
       branchId,
-      userPackageId,
-    } = req.body as {
+      date,              // ISO (yyyy-MM-ddTHH:mm)
+      paymentMethod,     // "efectivo" | "transferencia"
+      userPackageId,     // opcional
+    } = (req.body || {}) as {
       userId: string;
       packageId: string;
+      branchId: string;
       date: string;
-      paymentMethod: string;
-      branchId?: string;
+      paymentMethod?: "efectivo" | "transferencia";
       userPackageId?: string;
     };
 
-    if (!userId || !packageId || !date || !paymentMethod || !branchId) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    if (!userId || !packageId || !branchId || !date) {
+      return res.status(400).json({ error: "Faltan datos: userId, packageId, branchId, date." });
     }
 
-    const pkg = await prisma.package.findUnique({ where: { id: packageId } });
-    if (!pkg) return res.status(400).json({ error: "Paquete no encontrado" });
+    const slotDateRaw = new Date(date);
+    if (isNaN(slotDateRaw.getTime())) {
+      return res.status(400).json({ error: "Fecha inválida." });
+    }
+    const slotDate = normalizeToMinute(slotDateRaw);
 
-    // Buscar o crear UserPackage
-    let upkgId = userPackageId;
-    if (!upkgId) {
-      let userPackage = await prisma.userPackage.findFirst({
-        where: {
-          userId,
-          packageId,
-          sessionsRemaining: { gt: 0 },
-        },
-      });
-      if (!userPackage) {
-        userPackage = await prisma.userPackage.create({
+    try {
+      // 1) Cargar paquete
+      const pkg = await prisma.package.findUnique({ where: { id: packageId } });
+      if (!pkg) return res.status(404).json({ error: "Paquete no encontrado." });
+
+      // 2) Obtener/crear UserPackage con sesiones disponibles
+      let up = userPackageId
+        ? await prisma.userPackage.findUnique({ where: { id: userPackageId } })
+        : await prisma.userPackage.findFirst({
+            where: { userId, packageId, sessionsRemaining: { gt: 0 } },
+            orderBy: { createdAt: "asc" },
+          });
+
+      const createdNewUP = !up;
+      if (!up) {
+        up = await prisma.userPackage.create({
           data: {
             userId,
             packageId,
@@ -63,107 +72,129 @@ export default async function handler(
           },
         });
       }
-      upkgId = userPackage.id;
-    }
 
-    // Validar que no rebase el número de sesiones
-    const currentResCount = await prisma.reservation.count({
-      where: { userPackageId: upkgId },
-    });
-    if (currentResCount >= pkg.sessions) {
-      return res.status(409).json({ error: "Ya has reservado todas las sesiones de este paquete." });
-    }
+      // 3) Vigencia (30 días desde PRIMERA sesión del UserPackage)
+      let firstSessionDate: Date | null = null;
+      const firstRes = await prisma.reservation.findFirst({
+        where: { userPackageId: up.id },
+        orderBy: { date: "asc" },
+        select: { date: true },
+      });
+      if (firstRes) firstSessionDate = firstRes.date;
+      else if (createdNewUP) firstSessionDate = slotDate;
+      else firstSessionDate = slotDate;
 
-    // Checar aforo
-    const slotDate = new Date(date);
-    const slotISO = slotDate.toISOString();
-    const slotCount = await prisma.reservation.count({
-      where: {
-        date: slotISO,
-        branchId: branchId,
-        packageId: packageId,
-      },
-    });
-    let maxPerSlot = 1;
-    if (/agua/i.test(pkg.name) || /piso/i.test(pkg.name)) {
-      maxPerSlot = 3;
-    }
+      if (firstSessionDate) {
+        const min = new Date(firstSessionDate);
+        const max = new Date(firstSessionDate);
+        max.setDate(max.getDate() + 29);
+        if (slotDate < min || slotDate > max) {
+          return res.status(409).json({
+            error: "Fuera de la vigencia del paquete (30 días desde la primera sesión).",
+          });
+        }
+      }
 
-    if (slotCount >= maxPerSlot) {
-      return res.status(409).json({ error: "Horario no disponible para este paquete." });
-    }
+      // 4) Capacidad por slot/sucursal
+      const maxPerSlot = isAguaOPiso(pkg.name) ? 3 : 1;
+      const baseWhere: any = { branchId, date: slotDate };
+      // Para agua/piso el aforo es por paquete; para otros, es global al slot
+      const slotWhere = isAguaOPiso(pkg.name)
+        ? { ...baseWhere, packageId }
+        : baseWhere;
 
-    try {
-      const created = await prisma.reservation.create({
-        data: {
-          userId,
-          packageId,
-          date: slotDate,
-          paymentMethod,
-          branchId,
-          userPackageId: upkgId,
-        },
+      // 5) Transacción: revalidar aforo y descontar sesión en un paso
+      const created = await prisma.$transaction(async (tx) => {
+        // Aforo dentro de la transacción (evita carreras)
+        const taken = await tx.reservation.count({ where: slotWhere });
+        if (taken >= maxPerSlot) {
+          throw new Error("AFORO");
+        }
+
+        // Verificar sesiones disponibles
+        const freshUP = await tx.userPackage.findUnique({
+          where: { id: up!.id },
+          select: { sessionsRemaining: true },
+        });
+        if (!freshUP || freshUP.sessionsRemaining <= 0) {
+          throw new Error("SIN_SESIONES");
+        }
+
+        // Crear reserva
+        const reservation = await tx.reservation.create({
+          data: {
+            userId,
+            packageId,
+            branchId,
+            date: slotDate,
+            userPackageId: up!.id,
+            paymentMethod: paymentMethod === "transferencia" ? "transferencia" : "efectivo",
+          },
+          select: { id: true, date: true, userId: true, packageId: true, branchId: true, userPackageId: true, paymentMethod: true },
+        });
+
+        // Descontar 1 sesión
+        await tx.userPackage.update({
+          where: { id: up!.id },
+          data: { sessionsRemaining: { decrement: 1 } },
+        });
+
+        return reservation;
       });
 
       return res.status(201).json({
-        id: created.id,
+        ...created,
         date: created.date.toISOString(),
-        userId: created.userId,
-        packageId: created.packageId,
-        paymentMethod: created.paymentMethod,
-        branchId: created.branchId,
-        userPackageId: created.userPackageId,
+        message: "Reservación creada.",
       });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: "Error interno al crear la reservación." });
+    } catch (err: any) {
+      if (err?.message === "AFORO")        return res.status(409).json({ error: "Horario no disponible para este paquete/sucursal." });
+      if (err?.message === "SIN_SESIONES") return res.status(409).json({ error: "Sin sesiones disponibles en el paquete." });
+      console.error("POST /api/admin/reservations error:", err);
+      return res.status(500).json({ error: "Error al crear la reservación." });
     }
   }
 
-  // ----------- GET: consultar reservaciones -----------
+  // ---------- LISTAR RESERVAS ----------
   if (req.method === "GET") {
     const { date, start, end } = req.query as { date?: string; start?: string; end?: string };
 
-    // --- POR DÍA ---
+    // Por día
     if (date) {
       const dayStart = new Date(date + "T00:00:00");
-      const dayEnd = new Date(date + "T23:59:59.999");
+      const dayEnd   = new Date(date + "T23:59:59.999");
 
       const reservations = await prisma.reservation.findMany({
         where: { date: { gte: dayStart, lte: dayEnd } },
         include: {
-          user: { select: { name: true } },
-          package: { select: { name: true, sessions: true, price: true } },
+          user:      { select: { name: true } },
+          package:   { select: { name: true, sessions: true, price: true } },
           therapist: { include: { user: { select: { name: true } } } },
           userPackage: { select: { id: true } },
         },
         orderBy: { date: "asc" },
       });
 
-      // Para calcular sessionNumber correctamente por cada userPackage
-      let userPackagesReservs: { [upId: string]: any[] } = {};
-      const upIds = Array.from(new Set(reservations.map(r => r.userPackage?.id).filter(Boolean)));
+      // Calcular sessionNumber por UserPackage
+      const upIds = Array.from(new Set(reservations.map(r => r.userPackage?.id).filter(Boolean) as string[]));
+      const upToReservs: Record<string, { id: string; date: Date }[]> = {};
       await Promise.all(
         upIds.map(async (upId) => {
-          if (upId) {
-            userPackagesReservs[upId] = await prisma.reservation.findMany({
-              where: { userPackageId: upId },
-              orderBy: { date: "asc" },
-            });
-          }
+          upToReservs[upId] = await prisma.reservation.findMany({
+            where: { userPackageId: upId },
+            orderBy: { date: "asc" },
+            select: { id: true, date: true },
+          });
         })
       );
 
       const result = reservations.map((r) => {
         let sessionNumber = 1;
         let totalSessions = r.package?.sessions || 1;
-        const upId = r.userPackage?.id;
-        if (upId && userPackagesReservs[upId]) {
-          const todas = userPackagesReservs[upId];
-          todas.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          sessionNumber = todas.findIndex(sess => sess.id === r.id) + 1;
-          if (todas.length > 0 && r.package?.sessions)
-            totalSessions = r.package.sessions;
+        const upId = r.userPackage?.id || "";
+        if (upId && upToReservs[upId]) {
+          const list = upToReservs[upId];
+          sessionNumber = list.findIndex(x => x.id === r.id) + 1;
         }
         return {
           id: r.id,
@@ -181,104 +212,79 @@ export default async function handler(
       return res.status(200).json(result);
     }
 
-    // --- POR RANGO (para el calendario) ---
+    // Por rango (para calendario)
     if (start && end) {
       const reservations = await prisma.reservation.findMany({
-        where: {
-          date: {
-            gte: new Date(start),
-            lte: new Date(end),
-          },
-        },
+        where: { date: { gte: new Date(start), lte: new Date(end) } },
         select: { date: true },
       });
-
       return res.status(200).json(reservations);
     }
 
     return res.status(400).json({ error: "Faltan parámetros: date o start/end" });
   }
 
-  // ----------- PATCH: Reprogramar reservación -----------
+  // ---------- REPROGRAMAR ----------
   if (req.method === "PATCH") {
     const { reservationId, newDate, newTime } = req.body as {
       reservationId: string;
-      newDate: string;
-      newTime: string;
+      newDate: string; // 'YYYY-MM-DD'
+      newTime: string; // 'HH:mm'
     };
 
     if (!reservationId || !newDate || !newTime) {
       return res.status(400).json({ error: "Datos incompletos." });
     }
 
-    // Buscar la reservación existente
     const reservation = await prisma.reservation.findUnique({
       where: { id: reservationId },
-      include: { package: true, user: true, branch: true }
+      include: { package: true, branch: true },
     });
-    if (!reservation) {
-      return res.status(404).json({ error: "Reservación no encontrada." });
-    }
+    if (!reservation) return res.status(404).json({ error: "Reservación no encontrada." });
 
-    // Verificar vigencia del paquete (30 días desde la primera sesión)
-    let userPackageId = reservation.userPackageId;
+    const newDateObj = normalizeToMinute(new Date(`${newDate}T${newTime}`));
+
+    // Vigencia 30 días desde 1ª sesión del mismo UserPackage
     let firstSessionDate = reservation.date;
-    if (userPackageId) {
-      const primeras = await prisma.reservation.findMany({
-        where: { userPackageId },
+    if (reservation.userPackageId) {
+      const first = await prisma.reservation.findFirst({
+        where: { userPackageId: reservation.userPackageId },
         orderBy: { date: "asc" },
-        take: 1,
+        select: { date: true },
       });
-      if (primeras.length > 0) firstSessionDate = primeras[0].date;
+      if (first) firstSessionDate = first.date;
     }
-    const minDate = new Date(firstSessionDate);
-    const maxDate = new Date(firstSessionDate);
-    maxDate.setDate(maxDate.getDate() + 29);
-    const newDateObj = new Date(newDate + "T" + newTime);
-
-    if (newDateObj < minDate || newDateObj > maxDate) {
+    const min = new Date(firstSessionDate);
+    const max = new Date(firstSessionDate); max.setDate(max.getDate() + 29);
+    if (newDateObj < min || newDateObj > max) {
       return res.status(400).json({ error: "La nueva fecha debe estar dentro de la vigencia del paquete (30 días)." });
     }
 
-    // Validar disponibilidad/aforo
-    let maxPerSlot = 1;
-    let slotWhere: any = {
-      date: newDateObj,
-      branchId: reservation.branchId,
-    };
-    if (/agua/i.test(reservation.package.name) || /piso/i.test(reservation.package.name)) {
-      slotWhere.packageId = reservation.packageId;
-      maxPerSlot = 3;
-    }
+    // Aforo
+    const maxPerSlot = isAguaOPiso(reservation.package.name) ? 3 : 1;
+    const baseWhere: any = { branchId: reservation.branchId, date: newDateObj, id: { not: reservationId } };
+    const where = isAguaOPiso(reservation.package.name)
+      ? { ...baseWhere, packageId: reservation.packageId }
+      : baseWhere;
 
-    const slotCount = await prisma.reservation.count({
-      where: {
-        ...slotWhere,
-        id: { not: reservationId }
-      }
-    });
-
-    if (slotCount >= maxPerSlot) {
+    const taken = await prisma.reservation.count({ where });
+    if (taken >= maxPerSlot) {
       return res.status(409).json({ error: "Horario no disponible para este paquete." });
     }
 
-    try {
-      const updated = await prisma.reservation.update({
-        where: { id: reservationId },
-        data: { date: newDateObj }
-      });
+    const updated = await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { date: newDateObj },
+      select: { id: true, date: true },
+    });
 
-      return res.status(200).json({
-        id: updated.id,
-        date: updated.date.toISOString(),
-        message: "Reservación actualizada correctamente.",
-      });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: "Error al actualizar la reservación." });
-    }
+    return res.status(200).json({
+      id: updated.id,
+      date: updated.date.toISOString(),
+      message: "Reservación actualizada correctamente.",
+    });
   }
 
-  res.setHeader("Allow", ["GET", "POST", "PATCH"]);
+  res.setHeader("Allow", ["POST", "GET", "PATCH"]);
   return res.status(405).end("Method Not Allowed");
 }
