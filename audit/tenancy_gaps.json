@@ -1,0 +1,92 @@
+[
+  {
+    "file": "prisma/schema.prisma",
+    "lines": [12, 100],
+    "issue": "All core models (User, Therapist, Branch, Package, UserPackage, Reservation) lack a clinic_id/tenantId column, preventing logical isolation.",
+    "suggested_fix": {
+      "summary": "Add required clinicId fields with indexes and foreign keys to a Clinic model; update relations accordingly.",
+      "diff": "model User {\n-  id           String        @id @default(cuid())\n+  id           String        @id @default(cuid())\n+  clinicId     String        @map(\"clinic_id\")\n+  clinic       Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)\n   email        String        @unique\n   ...\n-  @@unique([email])\n+  @@index([clinicId, email])\n}\n\nmodel Reservation {\n-  userId        String\n+  clinicId      String        @map(\"clinic_id\")\n+  tenant        Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)\n+  userId        String\n   ...\n-  @@index([date])\n+  @@index([clinicId, date])\n}\n"
+    }
+  },
+  {
+    "file": "src/lib/prisma.ts",
+    "lines": [12, 20],
+    "issue": "Prisma client is instantiated without tenant-aware middleware, so queries cannot enforce clinic scoping.",
+    "suggested_fix": {
+      "summary": "Register Prisma middleware that injects clinicId from request context into all operations.",
+      "diff": "import { getTenantId } from '@/lib/tenant-context';\n\nprisma.$use(async (params, next) => {\n  const tenantId = getTenantId();\n  if (!tenantId) {\n    if (['findMany','findUnique','findFirst','update','delete','upsert','count','aggregate'].includes(params.action)) {\n      throw new Error('Missing tenant context');\n    }\n    return next(params);\n  }\n  const modelsWithTenant = ['User','Therapist','Branch','Package','UserPackage','Reservation','PasswordResetToken'];\n  if (modelsWithTenant.includes(params.model!)) {\n    params.args = params.args || {};\n    if (['findMany','findFirst','count','aggregate'].includes(params.action)) {\n      params.args.where = { clinicId: tenantId, ...(params.args.where || {}) };\n    } else if (['findUnique','findUniqueOrThrow'].includes(params.action)) {\n      params.args.where = { clinicId_tenantScoped: { clinicId: tenantId, ...(params.args.where || {}) } };\n    } else if (['create','createMany','update','upsert'].includes(params.action)) {\n      params.args.data = { clinicId: tenantId, ...(params.args.data || {}) };\n    }\n  }\n  return next(params);\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/admin/clients/index.ts",
+    "lines": [22, 45],
+    "issue": "Client listings and creations query User without scoping to the authenticated clinic.",
+    "suggested_fix": {
+      "summary": "Augment where clauses with clinicId and persist clinicId when creating users.",
+      "diff": "const tenantId = session.user.clinicId;\nconst clients = await prisma.user.findMany({\n-  where: { role: 'CLIENT', OR: [...] }\n+  where: { clinicId: tenantId, role: 'CLIENT', OR: [...] }\n});\n...\nconst client = await prisma.user.create({\n-  data: { name, email, phone, password: hashed, role: 'CLIENT' }\n+  data: { name, email, phone, password: hashed, role: 'CLIENT', clinicId: tenantId }\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/admin/reservations.ts",
+    "lines": [52, 217],
+    "issue": "Reservation CRUD uses packageId/userId without restricting by clinic, so one clinic can manipulate another's bookings.",
+    "suggested_fix": {
+      "summary": "Add clinicId filters to all lookups and set clinicId in transactional writes.",
+      "diff": "const tenantId = session.user.clinicId;\nconst pkg = await prisma.package.findUnique({\n-  where: { id: packageId }\n+  where: { id: packageId, clinicId: tenantId }\n});\n...\nawait prisma.$transaction(async (tx) => {\n-  const taken = await tx.reservation.count({ where: slotWhere });\n+  const taken = await tx.reservation.count({ where: { ...slotWhere, clinicId: tenantId } });\n  ...\n-  return tx.reservation.create({ data: { userId, packageId, branchId, ... } });\n+  return tx.reservation.create({ data: { clinicId: tenantId, userId, packageId, branchId, ... } });\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/therapist/clients.ts",
+    "lines": [22, 45],
+    "issue": "Therapist view creates and lists users globally, so one tenant's therapist can see other clinics' clients.",
+    "suggested_fix": {
+      "summary": "Restrict queries to therapist's clinic and persist clinicId on new users.",
+      "diff": "const tenantId = session.user.clinicId;\nconst clients = await prisma.user.findMany({\n-  where: { role: 'CLIENT', OR: [...] }\n+  where: { clinicId: tenantId, role: 'CLIENT', OR: [...] }\n});\n...\nconst client = await prisma.user.create({\n-  data: { name, email, phone, password: hashed, role: 'CLIENT' }\n+  data: { name, email, phone, password: hashed, role: 'CLIENT', clinicId: tenantId }\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/stripe/webhook.ts",
+    "lines": [38, 134],
+    "issue": "Webhook upserts services, therapists, user packages, and reservations without associating clinicId, risking cross-tenant data leakage when Stripe metadata is tampered.",
+    "suggested_fix": {
+      "summary": "Read clinicId from metadata, set it on all writes, and scope reads to that tenant.",
+      "diff": "const tenantId = m.clinicId;\nif (!tenantId) throw new Error('Missing clinic context');\nawait prisma.service.upsert({\n-  where: { id: serviceId },\n-  update: { name: serviceName },\n-  create: { id: serviceId, name: serviceName },\n+  where: { id_clinicId: { id: serviceId, clinicId: tenantId } },\n+  update: { name: serviceName },\n+  create: { id: serviceId, name: serviceName, clinicId: tenantId },\n});\n...\nawait prisma.reservation.createMany({\n-  data: recs\n+  data: recs.map(r => ({ ...r, clinicId: tenantId }))\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/user/packages.ts",
+    "lines": [23, 37],
+    "issue": "User package listing joins packages via incorrect relation (pkg) and lacks tenant scope.",
+    "suggested_fix": {
+      "summary": "Join through package, include clinicId filter, and expose only tenant-specific data.",
+      "diff": "const tenantId = session.user.clinicId;\nconst userPackages = await prisma.userPackage.findMany({\n-  where: { userId: session.user.id },\n-  include: { pkg: true },\n+  where: { userId: session.user.id, clinicId: tenantId },\n+  include: { package: true },\n});"
+    }
+  },
+  {
+    "file": "src/pages/api/admin/availability.ts",
+    "lines": [76, 117],
+    "issue": "Availability calculator fetches reservations by package/branch without tenant guard, so schedules leak across clinics.",
+    "suggested_fix": {
+      "summary": "Inject clinicId into where clauses and ensure branches/packages are tenant-bound.",
+      "diff": "const tenantId = session.user.clinicId;\nconst where: any = {\n-  packageId, branchId, date: { gte: dayStart, lte: dayEnd },\n+  clinicId: tenantId, packageId, branchId, date: { gte: dayStart, lte: dayEnd },\n};"
+    }
+  },
+  {
+    "file": "src/pages/api/appointments/create.ts",
+    "lines": [35, 127],
+    "issue": "Booking flow reads packages, therapists, user packages, and creates reservations without clinic scoping.",
+    "suggested_fix": {
+      "summary": "Require session.user.clinicId, scope all reads, and set clinicId on create/update.",
+      "diff": "const tenantId = session.user.clinicId;\nconst pkg = await prisma.package.findUnique({\n-  where: { id: paquete }\n+  where: { id: paquete, clinicId: tenantId }\n});\nconst ther = await prisma.therapist.findFirst({\n-  where: { user: { name: terapeuta } },\n+  where: { clinicId: tenantId, user: { name: terapeuta, clinicId: tenantId } },\n});\n...\nawait prisma.$transaction([\n  prisma.reservation.create({ data: { clinicId: tenantId, ... } }),\n  prisma.userPackage.update({ where: { id: userPkg.id, clinicId: tenantId }, data: { sessionsRemaining: { decrement: 1 } } })\n]);"
+    }
+  },
+  {
+    "file": "src/pages/api/packages.ts",
+    "lines": [18, 27],
+    "issue": "Public package listing returns all packages across clinics.",
+    "suggested_fix": {
+      "summary": "Filter packages by clinicId derived from request hostname/path.",
+      "diff": "const tenantId = resolveTenant(req);\nconst pkgs = await prisma.package.findMany({\n-  \n+  where: { clinicId: tenantId }\n});"
+    }
+  }
+]

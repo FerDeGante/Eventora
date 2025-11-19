@@ -1,0 +1,91 @@
+[
+  {
+    "id": "SF-01",
+    "owasp": "A01:2021-Broken Access Control",
+    "severity": "Critical",
+    "evidence": [
+      "src/pages/api/admin/branches.ts:5-12",
+      "src/pages/api/admin/availability.ts:9-121",
+      "src/pages/api/therapist/[id]/reservations.ts:6-53"
+    ],
+    "description": "Multiple administrative/therapist endpoints return sensitive scheduling data without any authentication middleware, enabling unauthenticated users to enumerate branches, availability and reservations across clinics.",
+    "businessImpact": "Exposes full booking inventory and client PII, breaking exclusivity commitments and violating privacy regulations.",
+    "recommendedFix": "Wrap every admin/therapist route with NextAuth session checks plus role- and tenant-based authorization middleware before executing Prisma queries.",
+    "cost": "M",
+    "effort_hours": 16,
+    "quick_win": true
+  },
+  {
+    "id": "SF-02",
+    "owasp": "A02:2021-Cryptographic Failures",
+    "severity": "High",
+    "evidence": [
+      "netlify.toml:13-24"
+    ],
+    "description": "Production secrets (NEXTAUTH_SECRET, Stripe keys, Neon credentials) are committed in version control, defeating secret rotation and exposing patient data paths.",
+    "businessImpact": "Key leakage allows account takeover, payment fraud and database exfiltration.",
+    "recommendedFix": "Purge committed secrets, rotate credentials, and load them exclusively from encrypted environment stores (Netlify/Vercel secrets or Doppler).",
+    "cost": "S",
+    "effort_hours": 6,
+    "quick_win": true
+  },
+  {
+    "id": "SF-03",
+    "owasp": "A05:2021-Security Misconfiguration",
+    "severity": "High",
+    "evidence": [
+      "next.config.mjs:1-5",
+      "src/lib/prisma.ts:12-20"
+    ],
+    "description": "Default Next.js configuration lacks security headers (CSP, HSTS, X-Frame-Options) and Prisma client logs every query including PII to stdout.",
+    "businessImpact": "Increases risk of XSS, clickjacking, and PII leakage through logs; non-compliant with LFPDPPP/HIPAA logging guidance.",
+    "recommendedFix": "Harden next.config.js with strict security headers, disable query logging in production, and implement structured, PII-masked audit logs.",
+    "cost": "M",
+    "effort_hours": 12,
+    "quick_win": true
+  },
+  {
+    "id": "SF-04",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "severity": "High",
+    "evidence": [
+      "src/pages/api/auth/request-token.ts:6-43",
+      "src/pages/api/auth/validate-token.ts:5-18"
+    ],
+    "description": "Password reset and registration token endpoints allow unlimited attempts without rate limiting or device binding, enabling credential stuffing and token brute force.",
+    "businessImpact": "Attackers can enumerate valid emails and brute-force 6-digit codes, compromising patient accounts.",
+    "recommendedFix": "Introduce per-IP and per-identity throttling (Redis-based), add reCAPTCHA/turnstile, and invalidate tokens after configurable retry limits.",
+    "cost": "M",
+    "effort_hours": 18,
+    "quick_win": false
+  },
+  {
+    "id": "SF-05",
+    "owasp": "A08:2021-Software and Data Integrity Failures",
+    "severity": "High",
+    "evidence": [
+      "src/pages/api/stripe/webhook.ts:24-135"
+    ],
+    "description": "Stripe webhook processes metadata directly to create users, therapists, and reservations without idempotency keys or tenant validation.",
+    "businessImpact": "Enables replay attacks, duplicate bookings, and cross-tenant data pollution via crafted webhook payloads.",
+    "recommendedFix": "Persist processed event IDs, verify clinicId metadata, and enqueue webhook handling into an idempotent job queue before mutating state.",
+    "cost": "M",
+    "effort_hours": 20,
+    "quick_win": false
+  },
+  {
+    "id": "SF-06",
+    "owasp": "A09:2021-Security Logging and Monitoring Failures",
+    "severity": "Medium",
+    "evidence": [
+      "src/pages/api/admin/reservations.ts:23-285",
+      "src/pages/api/auth/change-password.ts:7-75"
+    ],
+    "description": "Sensitive operations (reservations, password changes) execute without audit trail, masking, or alerting when high-risk actions occur.",
+    "businessImpact": "Undermines forensic readiness and HIPAA/LFPDPPP audit obligations.",
+    "recommendedFix": "Introduce structured audit logs with tenant/user context, retention policy, and anomaly alerts (e.g., via OpenTelemetry exporters).",
+    "cost": "L",
+    "effort_hours": 14,
+    "quick_win": false
+  }
+]
