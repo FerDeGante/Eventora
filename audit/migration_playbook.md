@@ -1,7 +1,7 @@
 # Migration Playbook — Single Clinic to Multi-Tenant
 
 ## Overview
-Goal: refactor Bloom from a single-clinic deployment to a tenant-aware SaaS while maintaining uptime and regulatory compliance.
+Goal: refactor Eventora from a single-clinic deployment to a tenant-aware SaaS while maintaining uptime and regulatory compliance.
 
 ## Prerequisites
 - Inventory of all production data (backup + anonymised sample for staging).

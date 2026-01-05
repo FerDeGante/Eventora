@@ -20,7 +20,7 @@ module.exports = async function seedTherapists() {
   for (const { name, specialty, email } of therapists) {
     try {
       // 1. Upsert para usuario
-      const passwordHash = await bcrypt.hash("bloomTherapist123", 10);
+      const passwordHash = await bcrypt.hash("eventoraTherapist123", 10);
       const user = await prisma.user.upsert({
         where: { email },
         update: { name, password: passwordHash, role: "THERAPIST" },

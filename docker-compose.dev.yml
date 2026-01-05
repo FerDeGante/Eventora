@@ -1,0 +1,148 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: bloom-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bloom
+      POSTGRES_PASSWORD: bloom_dev_password
+      POSTGRES_DB: bloom_dev
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloom -d bloom_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bloom-network
+
+  # Redis (for caching and rate limiting)
+  redis:
+    image: redis:7-alpine
+    container_name: bloom-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass bloom_redis_password
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bloom-network
+
+  # pgAdmin (optional - database GUI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bloom-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bloom.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - bloom-network
+    profiles:
+      - tools
+
+  # Redis Commander (optional - Redis GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: bloom-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:bloom-redis:6379:0:bloom_redis_password
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - bloom-network
+    profiles:
+      - tools
+
+  # Mailhog (optional - email testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: bloom-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    networks:
+      - bloom-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  bloom-network:
+    driver: bridge
+
+# ============================================
+# USAGE INSTRUCTIONS
+# ============================================
+#
+# Start core services (postgres + redis):
+#   docker-compose -f docker-compose.dev.yml up -d
+#
+# Start with optional tools (pgadmin, redis-commander, mailhog):
+#   docker-compose -f docker-compose.dev.yml --profile tools up -d
+#
+# Stop all services:
+#   docker-compose -f docker-compose.dev.yml down
+#
+# Stop and remove volumes (WARNING: deletes data):
+#   docker-compose -f docker-compose.dev.yml down -v
+#
+# View logs:
+#   docker-compose -f docker-compose.dev.yml logs -f
+#
+# Access services:
+#   - PostgreSQL: localhost:5432
+#     User: bloom
+#     Password: bloom_dev_password
+#     Database: bloom_dev
+#
+#   - Redis: localhost:6379
+#     Password: bloom_redis_password
+#
+#   - pgAdmin: http://localhost:5050
+#     Email: admin@bloom.local
+#     Password: admin
+#
+#   - Redis Commander: http://localhost:8081
+#
+#   - Mailhog UI: http://localhost:8025
+#     SMTP: localhost:1025
+#
+# Environment variables for .env.local:
+#   DATABASE_URL="postgresql://bloom:bloom_dev_password@localhost:5432/bloom_dev?schema=public"
+#   REDIS_URL="redis://:bloom_redis_password@localhost:6379"
+#   SMTP_HOST="localhost"
+#   SMTP_PORT="1025"

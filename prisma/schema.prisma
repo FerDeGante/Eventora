@@ -7,124 +7,953 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// -- USERS --
-
-model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String?
-  phone        String?
-  password     String
-  role         String        @default("CLIENT")
-  userPackages UserPackage[]
-  reservations Reservation[]
-  therapist    Therapist?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+enum UserRole {
+  ADMIN
+  MANAGER
+  RECEPTION
+  THERAPIST
+  CLIENT
 }
 
-// -- THERAPISTS --
-
-model Therapist {
-  id           String              @id @default(cuid())
-  userId       String              @unique
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  specialty    String?
-  isActive     Boolean             @default(true)
-  reservations Reservation[]
-  branches     TherapistOnBranch[]
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+enum PackageStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
 }
 
-// -- BRANCHES --
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  UNPAID
+  AUTHORIZED
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum PaymentProvider {
+  STRIPE
+  CASH
+  POS
+  MERCADO_PAGO
+}
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+  WHATSAPP
+  BI_WEBHOOK
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  SCHEDULED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum CheckInStatus {
+  ARRIVED
+  IN_SESSION
+  COMPLETED
+}
+
+enum OwnerType {
+  BRANCH
+  THERAPIST
+  RESOURCE
+  SERVICE
+}
+
+enum ResourceType {
+  POOL
+  CABIN
+  ROOM
+  EQUIPMENT
+  OTHER
+}
+
+// ============================================
+// EVENTORA SAAS - PLANES DE SUSCRIPCIÓN
+// ============================================
+
+enum PlanInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+model Plan {
+  id                  String        @id @default(cuid())
+  name                String        @unique // "Starter", "Professional", "Enterprise"
+  stripePriceIdMonthly String?
+  stripePriceIdYearly  String?
+  priceMonthly        Int           @default(0) // en centavos MXN
+  priceYearly         Int           @default(0)
+  features            Json?         // { "maxUsers": 5, "maxBranches": 1, "analytics": false }
+  maxUsers            Int           @default(5)
+  maxBranches         Int           @default(1)
+  maxServices         Int           @default(20)
+  transactionFee      Int           @default(300) // 3.00% = 300 basis points
+  isActive            Boolean       @default(true)
+  sortOrder           Int           @default(0)
+  subscriptions       Subscription[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  clinicId              String             @unique
+  clinic                Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  planId                String
+  plan                  Plan               @relation(fields: [planId], references: [id])
+  status                SubscriptionStatus @default(TRIALING)
+  stripeSubscriptionId  String?            @unique
+  stripeCustomerId      String?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean            @default(false)
+  trialEndsAt           DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+// ============================================
+// WORKSPACE (CLINIC) - ACTUALIZADO
+// ============================================
+
+model Clinic {
+  id                       String                  @id @default(cuid())
+  name                     String
+  slug                     String                  @unique
+  ownerUserId              String?
+  ownerUser                User?                   @relation("ClinicOwner", fields: [ownerUserId], references: [id])
+  
+  // Stripe Connect
+  stripeAccountId          String?                 @unique
+  stripeOnboardingComplete Boolean                 @default(false)
+  stripeChargesEnabled     Boolean                 @default(false)
+  stripePayoutsEnabled     Boolean                 @default(false)
+  
+  // Branding & Settings
+  logoUrl                  String?
+  primaryColor             String?                 @default("#6366f1")
+  timezone                 String                  @default("America/Mexico_City")
+  currency                 String                  @default("MXN")
+  settings                 Json?
+  
+  // Relations
+  subscription             Subscription?
+  branches                 Branch[]
+  users                    User[]                  @relation("ClinicUsers")
+  serviceCategories        ServiceCategory[]
+  services                 Service[]
+  packages                 Package[]
+  resources                Resource[]
+  availabilityTemplates    AvailabilityTemplate[]
+  availabilityExceptions   AvailabilityException[]
+  userPackages             UserPackage[]
+  reservations             Reservation[]
+  paymentIntents           PaymentIntent[]
+  notifications            Notification[]
+  notificationTemplates    NotificationTemplate[]
+  auditLogs                AuditLog[]
+  posTerminals             PosTerminal[]
+  posPrinters              PosPrinter[]
+  posPrintJobs             PosPrintJob[]
+  cashShifts               CashShift[]
+  integrations             IntegrationCredential[]
+  memberships              Membership[]
+  userMemberships          UserMembership[]
+  membershipCheckIns       MembershipCheckIn[]
+  productCategories        ProductCategory[]
+  products                 Product[]
+  stockMovements           StockMovement[]
+  sales                    Sale[]
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  PasswordResetToken       PasswordResetToken[]
+}
 
 model Branch {
-  id           String              @id @default(cuid())
-  name         String              @unique
-  address      String?
-  phone        String?
-  openHours    String?
-  reservations Reservation[]
-  therapists   TherapistOnBranch[]
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  id                    String                 @id @default(cuid())
+  clinicId              String
+  clinic                Clinic                 @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name                  String
+  address               String?
+  timezone              String?
+  phone                 String?
+  resources             Resource[]
+  staff                 Staff[]
+  reservations          Reservation[]
+  availabilityTemplates AvailabilityTemplate[]
+  posTerminals         PosTerminal[]
+  cashShifts           CashShift[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
 }
 
-model TherapistOnBranch {
-  id          String    @id @default(cuid())
-  therapistId String
-  branchId    String
-  therapist   Therapist @relation(fields: [therapistId], references: [id])
-  branch      Branch    @relation(fields: [branchId], references: [id])
-  // Optionally: workSchedule String? (for individual therapist/branch hours)
+model User {
+  id             String          @id @default(cuid())
+  clinicId       String
+  clinic         Clinic          @relation("ClinicUsers", fields: [clinicId], references: [id], onDelete: Cascade)
+  ownedClinics   Clinic[]        @relation("ClinicOwner")
+  email          String
+  passwordHash   String
+  role           UserRole        @default(CLIENT)
+  status         String?         @default("ACTIVE")
+  name           String?
+  phone          String?
+  avatarUrl      String?
+  lastLoginAt    DateTime?
+  twoFactorEnabled Boolean     @default(false)
+  twoFactorSecret  String?
+  staff          Staff?
+  userPackages   UserPackage[]
+  reservations   Reservation[]
+  paymentIntents PaymentIntent[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  userMemberships UserMembership[]
+  sales           Sale[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([clinicId, email])
+  @@index([clinicId])
 }
 
-// -- PACKAGES --
-
-model Package {
-  id              String        @id @default(cuid())
-  stripePriceId   String        @unique
-  name            String
-  workingDays     String
-  workingHours    String
-  saturdayHours   String?
-  sundayHours     String?
-  sessionDuration Int
-  sessions        Int
-  price           Int
-  inscription     Int
-  userPackages    UserPackage[]
-  reservations    Reservation[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+model Staff {
+  id               String            @id @default(cuid())
+  userId           String            @unique
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId         String?
+  branch           Branch?           @relation(fields: [branchId], references: [id])
+  jobTitle         String?
+  colorTag         String?
+  permissions      Json?
+  therapistProfile TherapistProfile?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  PaymentIntent    PaymentIntent[]
+  CheckIn          CheckIn[]
+  cashShiftsOpened CashShift[]    @relation("CashShiftOpenedBy")
+  cashShiftsClosed CashShift[]    @relation("CashShiftClosedBy")
 }
 
-// -- USERPACKAGES --
-
-model UserPackage {
+model TherapistProfile {
   id                String        @id @default(cuid())
-  userId            String
-  packageId         String
-  sessionsRemaining Int
-  paymentSource     String        @default("stripe")
-  user              User          @relation(fields: [userId], references: [id])
-  package           Package       @relation(fields: [packageId], references: [id])
+  staffId           String        @unique
+  staff             Staff         @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  specialties       String[]
+  bio               String?
+  avgSessionMinutes Int           @default(60)
+  colorTag          String?
   reservations      Reservation[]
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }
 
-// -- RESERVATIONS --
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  clinicId  String
+  clinic    Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name      String
+  colorHex  String?
+  sortOrder Int       @default(0)
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-model Reservation {
-  id            String    @id @default(cuid())
-  userId        String
-  packageId     String
-  therapistId   String? // Optional for assignment later
-  userPackageId String?
-  branchId      String
-  date          DateTime
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  paymentMethod String    @default("cash")
-  paidAt        DateTime?
-
-  user        User         @relation(fields: [userId], references: [id])
-  package     Package      @relation(fields: [packageId], references: [id])
-  therapist   Therapist?   @relation(fields: [therapistId], references: [id])
-  userPackage UserPackage? @relation(fields: [userPackageId], references: [id], onDelete: Cascade)
-  branch      Branch       @relation(fields: [branchId], references: [id])
+  @@unique([clinicId, name])
+  @@index([clinicId])
 }
 
-// Reset password
+model Service {
+  id                    String                 @id @default(cuid())
+  clinicId              String
+  clinic                Clinic                 @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  categoryId            String?
+  category              ServiceCategory?       @relation(fields: [categoryId], references: [id])
+  name                  String
+  description           String?
+  defaultDuration       Int                    @default(60)
+  basePrice             Int                    @default(0)
+  requiresResource      Boolean                @default(false)
+  isPackageable         Boolean                @default(true)
+  metadata              Json?
+  reservations          Reservation[]
+  packageServices       PackageService[]
+  availabilityTemplates AvailabilityTemplate[]
+  resources             Resource[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
+model Package {
+  id              String           @id @default(cuid())
+  clinicId        String
+  clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  sessions        Int              @default(1)
+  validityDays    Int              @default(30)
+  defaultDuration Int              @default(60)
+  basePrice       Int              @default(0)
+  inscriptionFee  Int              @default(0)
+  stripePriceId   String?
+  status          PackageStatus    @default(DRAFT)
+  metadata        Json?
+  userPackages    UserPackage[]
+  reservations    Reservation[]
+  services        PackageService[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
+model PackageService {
+  id        String  @id @default(cuid())
+  packageId String
+  serviceId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  mandatory Boolean @default(true)
+  sequence  Int     @default(0)
+
+  @@unique([packageId, serviceId])
+}
+
+model Resource {
+  id                    String                 @id @default(cuid())
+  clinicId              String
+  clinic                Clinic                 @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branchId              String?
+  branch                Branch?                @relation(fields: [branchId], references: [id])
+  serviceId             String?
+  service               Service?               @relation(fields: [serviceId], references: [id])
+  type                  ResourceType           @default(OTHER)
+  name                  String
+  capacity              Int                    @default(1)
+  tags                  String[]
+  reservations          Reservation[]
+  availabilityTemplates AvailabilityTemplate[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
+model AvailabilityTemplate {
+  id           String    @id @default(cuid())
+  clinicId     String
+  clinic       Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  ownerType    OwnerType
+  ownerId      String
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id])
+  weekday      Int
+  startTime    DateTime  @db.Time
+  endTime      DateTime  @db.Time
+  slotDuration Int       @default(30)
+  capacity     Int       @default(1)
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  Service      Service?  @relation(fields: [serviceId], references: [id])
+  serviceId    String?
+  Resource     Resource? @relation(fields: [resourceId], references: [id])
+  resourceId   String?
+
+  @@index([clinicId, ownerType, ownerId])
+}
+
+model AvailabilityException {
+  id               String    @id @default(cuid())
+  clinicId         String
+  clinic           Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  ownerType        OwnerType
+  ownerId          String
+  date             DateTime  @db.Date
+  closed           Boolean   @default(false)
+  replacementSlots Json?
+  note             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([clinicId, ownerType, ownerId])
+}
+
+model UserPackage {
+  id                String          @id @default(cuid())
+  clinicId          String
+  clinic            Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId         String
+  package           Package         @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  sessionsTotal     Int             @default(1)
+  sessionsRemaining Int             @default(1)
+  startDate         DateTime?
+  expiryDate        DateTime?
+  pricePaid         Int             @default(0)
+  paymentSource     PaymentProvider @default(STRIPE)
+  metadata          Json?
+  reservations      Reservation[]
+  paymentIntents    PaymentIntent[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([clinicId])
+  @@index([clinicId, userId])
+}
+
+model Reservation {
+  id              String            @id @default(cuid())
+  clinicId        String
+  clinic          Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branchId        String
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id])
+  packageId       String?
+  package         Package?          @relation(fields: [packageId], references: [id])
+  userPackageId   String?
+  userPackage     UserPackage?      @relation(fields: [userPackageId], references: [id])
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  therapistId     String?
+  therapist       TherapistProfile? @relation(fields: [therapistId], references: [id])
+  resourceId      String?
+  resource        Resource?         @relation(fields: [resourceId], references: [id])
+  startAt         DateTime
+  endAt           DateTime
+  status          ReservationStatus @default(PENDING)
+  paymentStatus   PaymentStatus     @default(UNPAID)
+  paymentIntentId String?           @unique
+  paymentIntent   PaymentIntent?    @relation("ReservationPaymentIntent", fields: [paymentIntentId], references: [id])
+  notes           String?
+  specialRequests String?
+  checkIns        CheckIn[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([clinicId, startAt])
+  @@index([clinicId, userId])
+  @@index([clinicId, branchId, startAt])
+}
+
+model PaymentIntent {
+  id               String          @id @default(cuid())
+  clinicId         String
+  clinic           Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  reservation      Reservation?    @relation("ReservationPaymentIntent")
+  userPackageId    String?
+  userPackage      UserPackage?    @relation(fields: [userPackageId], references: [id])
+  amount           Int
+  currency         String          @default("MXN")
+  provider         PaymentProvider @default(STRIPE)
+  providerRef      String?
+  status           PaymentStatus   @default(UNPAID)
+  metadata         Json?
+  createdByStaffId String?
+  createdByStaff   Staff?          @relation(fields: [createdByStaffId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  User             User?           @relation(fields: [userId], references: [id])
+  userId           String?
+  terminalId       String?
+  terminal         PosTerminal?    @relation(fields: [terminalId], references: [id])
+  printJobs        PosPrintJob[]
+
+  @@index([clinicId, createdAt])
+}
+
+model PosTerminal {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  name        String
+  status      String   @default("ACTIVE")
+  type        String   @default("terminal")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  paymentIntents PaymentIntent[]
+  printers    PosPrinter[]
+
+  @@index([clinicId])
+}
+
+model PosPrinter {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  terminalId  String?
+  terminal    PosTerminal? @relation(fields: [terminalId], references: [id])
+  name        String
+  type        String @default("thermal")
+  status      String @default("ACTIVE")
+  connection  String @default("network")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  printJobs   PosPrintJob[]
+
+  @@index([clinicId])
+}
+
+model PosPrintJob {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  printerId   String?
+  printer     PosPrinter? @relation(fields: [printerId], references: [id])
+  paymentIntentId String?
+  paymentIntent PaymentIntent? @relation(fields: [paymentIntentId], references: [id])
+  content      String
+  status       String   @default("QUEUED")
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  processedAt  DateTime?
+  error        String?
+
+  @@index([clinicId, status])
+}
+
+model IntegrationCredential {
+  id          String               @id @default(cuid())
+  clinicId    String
+  clinic      Clinic               @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  provider    IntegrationProvider
+  accessToken String?
+  refreshToken String?
+  expiresAt   DateTime?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([clinicId, provider])
+}
+
+model CashShift {
+  id           String   @id @default(cuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branchId     String?
+  branch       Branch?  @relation(fields: [branchId], references: [id])
+  openedById   String?
+  openedBy     Staff?   @relation("CashShiftOpenedBy", fields: [openedById], references: [id])
+  closedById   String?
+  closedBy     Staff?   @relation("CashShiftClosedBy", fields: [closedById], references: [id])
+  openedAt     DateTime @default(now())
+  closedAt     DateTime?
+  openingAmount Int     @default(0)
+  closingAmount Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([clinicId, branchId])
+}
+
+model CheckIn {
+  id            String        @id @default(cuid())
+  reservationId String
+  reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  staffId       String?
+  staff         Staff?        @relation(fields: [staffId], references: [id])
+  status        CheckInStatus @default(ARRIVED)
+  timestamp     DateTime      @default(now())
+  comment       String?
+}
+
+model Notification {
+  id          String              @id @default(cuid())
+  clinicId    String
+  clinic      Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?               @relation(fields: [userId], references: [id])
+  channel     NotificationChannel
+  template    String
+  payload     Json
+  status      NotificationStatus  @default(QUEUED)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  error       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([clinicId, status])
+  @@index([clinicId, createdAt])
+}
+
+model NotificationTemplate {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  key       String
+  name      String
+  subject   String
+  html      String?
+  text      String?
+  editable  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clinicId, key])
+  @@index([clinicId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actorUser   User?    @relation(fields: [actorUserId], references: [id])
+  entityType  String
+  entityId    String
+  action      String
+  diff        Json?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
+  clinicId  String?
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   email     String
   token     String
   expires   DateTime
   createdAt DateTime @default(now())
+  purpose   String   @default("password_reset")
 
   @@index([email])
 }
- 
+
+// ============================================
+// MEMBRESÍAS FLEXIBLES
+// ============================================
+
+enum MembershipType {
+  UNLIMITED           // Acceso ilimitado
+  SESSIONS_TOTAL      // X sesiones totales (ej: 20 sesiones)
+  SESSIONS_PERIOD     // X sesiones por periodo (ej: 5/semana)
+  TIME_BASED          // Acceso por tiempo (ej: 3 meses)
+  CLASSES_ONLY        // Solo clases grupales
+}
+
+enum BillingCycle {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  BIANNUAL
+  YEARLY
+  ONE_TIME
+}
+
+enum MembershipStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  CANCELLED
+}
+
+model Membership {
+  id                String           @id @default(cuid())
+  clinicId          String
+  clinic            Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  
+  // Básico
+  name              String
+  description       String?
+  type              MembershipType   @default(UNLIMITED)
+  
+  // Precio y ciclo
+  price             Int              @default(0)     // en centavos
+  billingCycle      BillingCycle     @default(MONTHLY)
+  inscriptionFee    Int              @default(0)
+  
+  // Límites según tipo
+  sessionsTotal     Int?                              // Para SESSIONS_TOTAL
+  sessionsPerPeriod Int?                              // Para SESSIONS_PERIOD (ej: 5)
+  periodType        BillingCycle?                     // Para SESSIONS_PERIOD (ej: WEEKLY = 5/semana)
+  durationDays      Int?                              // Para TIME_BASED
+  
+  // Restricciones
+  allowedServices   String[]                          // IDs de servicios permitidos (vacío = todos)
+  allowedBranches   String[]                          // IDs de sucursales permitidas (vacío = todas)
+  maxFreezeDays     Int              @default(0)      // Días que puede pausar
+  gracePeriodDays   Int              @default(3)      // Días de gracia para pago
+  
+  // Stripe
+  stripePriceId     String?
+  stripeProductId   String?
+  
+  // Estado
+  isPublic          Boolean          @default(true)
+  sortOrder         Int              @default(0)
+  metadata          Json?
+  
+  userMemberships   UserMembership[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
+model UserMembership {
+  id                  String           @id @default(cuid())
+  clinicId            String
+  clinic              Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membershipId        String
+  membership          Membership       @relation(fields: [membershipId], references: [id])
+  
+  // Estado
+  status              MembershipStatus @default(ACTIVE)
+  
+  // Fechas
+  startDate           DateTime         @default(now())
+  endDate             DateTime?
+  nextBillingDate     DateTime?
+  pausedAt            DateTime?
+  pauseEndDate        DateTime?
+  
+  // Sesiones (para tipos con límite)
+  sessionsUsed        Int              @default(0)
+  sessionsRemaining   Int?
+  periodSessionsUsed  Int              @default(0)    // Reset cada periodo
+  periodResetDate     DateTime?
+  
+  // Pago
+  pricePaid           Int              @default(0)
+  stripeSubscriptionId String?
+  paymentProvider     PaymentProvider  @default(STRIPE)
+  
+  // Control
+  autoRenew           Boolean          @default(true)
+  freezeDaysUsed      Int              @default(0)
+  metadata            Json?
+  
+  checkIns            MembershipCheckIn[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([clinicId, userId])
+  @@index([clinicId, status])
+}
+
+model MembershipCheckIn {
+  id               String         @id @default(cuid())
+  clinicId         String
+  clinic           Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userMembershipId String
+  userMembership   UserMembership @relation(fields: [userMembershipId], references: [id], onDelete: Cascade)
+  
+  checkInAt        DateTime       @default(now())
+  checkOutAt       DateTime?
+  serviceId        String?        // Servicio utilizado (opcional)
+  branchId         String?        // Sucursal donde hizo check-in
+  notes            String?
+  
+  @@index([clinicId, checkInAt])
+  @@index([userMembershipId])
+}
+
+// ============================================
+// PRODUCTOS E INVENTARIO
+// ============================================
+
+model ProductCategory {
+  id        String    @id @default(cuid())
+  clinicId  String
+  clinic    Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  clinicId    String
+  clinic      Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    ProductCategory? @relation(fields: [categoryId], references: [id])
+  
+  name        String
+  description String?
+  sku         String?
+  barcode     String?
+  
+  // Precios
+  price       Int              @default(0)  // Precio de venta
+  cost        Int              @default(0)  // Costo
+  
+  // Inventario
+  trackStock  Boolean          @default(true)
+  stockQty    Int              @default(0)
+  lowStockAt  Int              @default(5)
+  
+  // Estado
+  isActive    Boolean          @default(true)
+  imageUrl    String?
+  metadata    Json?
+  
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([clinicId, sku])
+  @@index([clinicId])
+}
+
+enum StockMovementType {
+  PURCHASE      // Compra/entrada
+  SALE          // Venta
+  ADJUSTMENT    // Ajuste manual
+  RETURN        // Devolución
+  TRANSFER      // Transferencia entre sucursales
+  LOSS          // Pérdida/merma
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  clinicId    String
+  clinic      Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  type        StockMovementType
+  quantity    Int                // Positivo = entrada, negativo = salida
+  previousQty Int
+  newQty      Int
+  
+  reference   String?            // ID de venta, orden de compra, etc.
+  notes       String?
+  createdById String?
+  createdAt   DateTime           @default(now())
+
+  @@index([clinicId, productId])
+  @@index([clinicId, createdAt])
+}
+
+// ============================================
+// VENTAS UNIFICADAS (POS)
+// ============================================
+
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  CANCELLED
+}
+
+model Sale {
+  id              String          @id @default(cuid())
+  clinicId        String
+  clinic          Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  
+  // Cliente (opcional para ventas mostrador)
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id])
+  
+  // Totales
+  subtotal        Int             @default(0)
+  discount        Int             @default(0)
+  tax             Int             @default(0)
+  total           Int             @default(0)
+  
+  // Pago
+  paymentProvider PaymentProvider @default(CASH)
+  paymentRef      String?
+  status          SaleStatus      @default(PENDING)
+  
+  // Metadata
+  branchId        String?
+  createdById     String?         // Staff que procesó
+  notes           String?
+  metadata        Json?
+  
+  items           SaleItem[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([clinicId, createdAt])
+  @@index([clinicId, userId])
+}
+
+enum SaleItemType {
+  PRODUCT
+  SERVICE
+  PACKAGE
+  MEMBERSHIP
+  OTHER
+}
+
+model SaleItem {
+  id          String       @id @default(cuid())
+  saleId      String
+  sale        Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  
+  type        SaleItemType
+  productId   String?
+  product     Product?     @relation(fields: [productId], references: [id])
+  
+  // Puede ser producto, servicio, paquete o membresía
+  referenceId String?      // ID del item vendido
+  name        String       // Nombre al momento de venta
+  quantity    Int          @default(1)
+  unitPrice   Int          @default(0)
+  discount    Int          @default(0)
+  total       Int          @default(0)
+  
+  metadata    Json?
+
+  @@index([saleId])
+}

@@ -1,0 +1,240 @@
+.section {
+  padding: var(--space-3xl) 0;
+  background: var(--evt-bg-alt);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3xl);
+  align-items: center;
+}
+
+/* Left Column */
+.leftColumn {
+  max-width: 500px;
+}
+
+.leftColumn h2 {
+  margin-bottom: 1.5rem;
+}
+
+.leftColumn p {
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+/* Right Column - Visual */
+.rightColumn {
+  position: relative;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mockup Central */
+.mockup {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mockupScreen {
+  position: relative;
+  width: 400px;
+  height: 500px;
+  background: var(--evt-gradient-aurora);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.mockupHeader {
+  padding: var(--space-sm);
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mockupDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mockupContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 48px);
+  color: white;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.mockupLogo {
+  font-size: 4rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.02em;
+}
+
+.mockupText {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Íconos Flotantes - Animación con Scroll */
+.floatingIcon {
+  position: absolute;
+  z-index: 2;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Posiciones iniciales (fuera de la imagen) */
+.floatingIcon.top-left {
+  top: 0;
+  left: 0;
+  transform: translate(
+    calc(-120px + (120px * var(--progress))),
+    calc(-120px + (120px * var(--progress)))
+  );
+}
+
+.floatingIcon.top-right {
+  top: 0;
+  right: 0;
+  transform: translate(
+    calc(120px - (120px * var(--progress))),
+    calc(-120px + (120px * var(--progress)))
+  );
+}
+
+.floatingIcon.bottom-left {
+  bottom: 0;
+  left: 0;
+  transform: translate(
+    calc(-120px + (120px * var(--progress))),
+    calc(120px - (120px * var(--progress)))
+  );
+}
+
+.floatingIcon.bottom-right {
+  bottom: 0;
+  right: 0;
+  transform: translate(
+    calc(120px - (120px * var(--progress))),
+    calc(120px - (120px * var(--progress)))
+  );
+}
+
+/* Círculo del ícono */
+.iconCircle {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.iconCircle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.iconEmoji {
+  font-size: 2rem;
+}
+
+/* Tooltip (aparece al hover) */
+.iconTooltip {
+  position: absolute;
+  bottom: calc(100% + 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(2, 6, 23, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.floatingIcon:hover .iconTooltip {
+  opacity: 1;
+}
+
+.iconTitle {
+  font-weight: 600;
+  color: var(--evt-text);
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.iconTooltip small {
+  color: var(--evt-text-secondary);
+  font-size: 0.75rem;
+  display: block;
+  max-width: 200px;
+  white-space: normal;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: var(--space-2xl);
+  }
+
+  .leftColumn {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .rightColumn {
+    height: 500px;
+  }
+
+  .mockupScreen {
+    width: 300px;
+    height: 400px;
+  }
+
+  .mockupLogo {
+    font-size: 3rem;
+  }
+
+  /* Íconos más pequeños en mobile */
+  .iconCircle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .iconEmoji {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,219 @@
+/* Import Inter from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Reset */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   EVENTORA DESIGN SYSTEM
+   ============================================ */
+
+:root {
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Eventora Brand Colors - Cosmos Theme */
+  --evt-bg: #020617;              /* Event Horizon - Background principal */
+  --evt-bg-alt: #0B1120;          /* Starfield Navy - Background alternativo */
+  --evt-bg-elevated: #02081A;     /* Deep Space - Cards elevados */
+  
+  --evt-primary: #38BDF8;         /* Aurora Blue - Primary color */
+  --evt-primary-deep: #0EA5E9;    /* Aurora Deep - Primary hover */
+  
+  --evt-secondary: #6366F1;       /* Quantum Violet - Secondary */
+  --evt-secondary-deep: #4F46E5;  /* Quantum Deep - Secondary hover */
+  
+  --evt-accent: #F97316;          /* Supernova - Accent color */
+  
+  --evt-text: #F9FAFB;            /* Cosmic White - Text principal */
+  --evt-text-secondary: #E5E7EB;  /* Nebula Gray - Text secondary */
+  --evt-text-muted: #9CA3AF;      /* Orbit Gray - Text muted */
+  
+  --evt-border: rgba(255, 255, 255, 0.1);
+  --evt-border-hover: rgba(255, 255, 255, 0.2);
+  
+  /* Eventora Gradients */
+  --evt-gradient-aurora: linear-gradient(135deg, #0EA5E9 0%, #6366F1 45%, #EC4899 100%);
+  --evt-gradient-cosmos: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 55%),
+                         radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.15) 0%, transparent 60%),
+                         #020617;
+  
+  /* Shadows */
+  --evt-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --evt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --evt-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.7);
+  --shadow-aurora: 0 8px 32px rgba(56, 189, 248, 0.3);
+  
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-full: 100px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.3s ease;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--evt-text);
+  background: var(--evt-bg);
+  line-height: 1.5;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  color: var(--evt-text);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+h1 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--evt-text-secondary);
+  margin: 0;
+}
+
+a {
+  color: var(--evt-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--evt-primary-deep);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn-primary {
+  background: var(--evt-gradient-aurora);
+  color: var(--evt-text);
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-aurora);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
+}
+
+.btn-secondary {
+  background: var(--evt-bg-elevated);
+  color: var(--evt-text);
+  padding: 0.875rem 2rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--evt-border);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--evt-bg-alt);
+  border-color: var(--evt-primary);
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 900px) {
+  html {
+    font-size: 15px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding: 0 var(--space-lg);
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding: 0 var(--space-md);
+  }
+}
