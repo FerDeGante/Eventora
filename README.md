@@ -1,7 +1,7 @@
 
 # Eventora
 
-Eventora es una plataforma de gestión de reservas y pagos para servicios terapéuticos. Está construida con Next.js, Prisma, NextAuth y Stripe, y permite:
+Eventora es una plataforma de gestión de reservas y pagos para servicios terapéuticos, de gimnasios, clinicas de spa, estudios de wellness, etc. Está construida con Next.js, Prisma, NextAuth y Stripe, y permite:
 
 * **Usuarios (clientes)** : registrarse, comprar paquetes, agendar y pagar sesiones por adelantado (Stripe) o en efectivo (front desk), visualizar histórico de reservas y agregar sesiones a Google Calendar.
 * **Administradores** : gestionar clientes, terapeutas, servicios, reservas y registrar pagos en efectivo directamente desde el panel de administración.
