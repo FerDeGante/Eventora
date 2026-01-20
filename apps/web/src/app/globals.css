@@ -593,6 +593,54 @@ a:hover {
   padding: 0.25rem;
 }
 
+.aurora-shell__notice {
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.12);
+  color: #92400e;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.aurora-shell__notice strong {
+  font-weight: 600;
+}
+
+.access-denied {
+  padding: 2.5rem;
+  border: 1px solid var(--evt-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 560px;
+}
+
+.access-denied__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  color: var(--evt-text-muted);
+  margin: 0;
+}
+
+.access-denied__title {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--evt-text);
+}
+
+.access-denied__message {
+  margin: 0;
+  color: var(--evt-text-secondary);
+}
+
+.access-denied__actions {
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 1100px) {
   .aurora-shell {
     grid-template-columns: 1fr;

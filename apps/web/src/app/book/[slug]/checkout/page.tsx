@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
 // ============================================
 // TYPES
@@ -20,6 +21,7 @@ type BookingDetails = {
     stripeChargesEnabled: boolean;
   };
   service: {
+    id?: string;
     name: string;
     price: number;
     durationMinutes: number;
@@ -274,11 +276,15 @@ export default function CheckoutPage() {
   const slug = params.slug as string;
   const bookingId = searchParams.get("booking");
   const paymentStatus = searchParams.get("payment");
+  const trackUx = useUxMetrics("booking_checkout");
+  const hasTrackedPayment = useRef(false);
+  const hasTrackedCancellation = useRef(false);
 
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookingMeta, setBookingMeta] = useState<{ clinicId?: string; serviceId?: string; slotStartAt?: string; bookingStartedAt?: string } | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -307,6 +313,45 @@ export default function CheckoutPage() {
     fetchBooking();
   }, [fetchBooking]);
 
+  useEffect(() => {
+    if (!bookingId || typeof window === "undefined") return;
+    const raw = window.sessionStorage.getItem(`eventora-booking-meta:${bookingId}`);
+    if (raw) {
+      try {
+        setBookingMeta(JSON.parse(raw) as { clinicId?: string; serviceId?: string; slotStartAt?: string; bookingStartedAt?: string });
+      } catch {
+        setBookingMeta(null);
+      }
+    }
+  }, [bookingId]);
+
+  useEffect(() => {
+    if (paymentStatus === "success" && booking && !hasTrackedPayment.current) {
+      trackUx("action", {
+        event: "payment_completed",
+        bookingId: booking.id,
+        clinicId: bookingMeta?.clinicId,
+        serviceId: bookingMeta?.serviceId ?? booking.service.id,
+        slotStartAt: bookingMeta?.slotStartAt,
+        eventAt: new Date().toISOString(),
+      });
+      hasTrackedPayment.current = true;
+    }
+  }, [paymentStatus, booking, bookingMeta, trackUx]);
+
+  useEffect(() => {
+    if (paymentStatus === "cancelled" && booking && !hasTrackedCancellation.current) {
+      trackUx("action", {
+        event: "payment_cancelled",
+        bookingId: booking.id,
+        clinicId: bookingMeta?.clinicId,
+        serviceId: bookingMeta?.serviceId ?? booking.service.id,
+        eventAt: new Date().toISOString(),
+      });
+      hasTrackedCancellation.current = true;
+    }
+  }, [paymentStatus, booking, bookingMeta, trackUx]);
+
   const handlePayment = async () => {
     if (!booking || processingPayment) return;
 
@@ -326,6 +371,14 @@ export default function CheckoutPage() {
         const data = await response.json();
         throw new Error(data.message || "Error al crear sesión de pago");
       }
+
+      trackUx("action", {
+        event: "checkout_started",
+        bookingId: booking.id,
+        clinicId: bookingMeta?.clinicId,
+        serviceId: bookingMeta?.serviceId ?? booking.service.id,
+        eventAt: new Date().toISOString(),
+      });
 
       const { url } = await response.json();
       if (url) {

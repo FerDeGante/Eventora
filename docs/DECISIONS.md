@@ -4,6 +4,51 @@
 
 ---
 
+## 2026-01-21 — Frontend RBAC Guardrails (UI + rutas)
+
+**Contexto:**  
+El frontend mostraba navegación y rutas sin validación por rol, lo que permitía deep links hacia secciones sensibles sin feedback claro.
+
+**Opciones consideradas:**
+1. Dejar guardrails solo en backend (rechazado por UX y riesgo de exposición visual)
+2. Agregar guards en AppChrome + middleware con matriz de roles (elegido)
+
+**Decisión:**  
+Implementar matriz de permisos por rol y guardrails en UI/middleware para ocultar navegación, bloquear rutas y mostrar estado “sin acceso” con CTA.
+
+**Consecuencias:**
+- Menor exposición de UI sensible
+- Experiencia consistente por rol
+- Redirección segura para roles sin acceso
+
+**Archivos modificados:**
+- `apps/web/src/lib/rbac.ts`
+- `apps/web/src/app/components/shell/AppChrome.tsx`
+- `apps/web/src/app/components/AccessDenied.tsx`
+- `apps/web/src/app/hooks/useAuth.tsx`
+- `apps/web/middleware.ts`
+
+---
+
+## 2026-01-21 — UX Metrics del funnel Booking → Checkout → Check-in
+
+**Contexto:**  
+El flujo público de booking/checkout y el check-in no emitían eventos KPI, lo que impedía medir ocupación, time-to-cash y no-show.
+
+**Decisión:**  
+Instrumentar eventos UX mínimos (booking_started, slot_selected, checkout_started, payment_completed, checkin_completed, no_show_marked) usando `useUxMetrics`, sin PII y con IDs/fechas de contexto.
+
+**Consecuencias:**
+- Visibilidad del funnel en observabilidad
+- Payloads consistentes y sin datos sensibles
+
+**Archivos modificados:**
+- `apps/web/src/app/book/[slug]/page.tsx`
+- `apps/web/src/app/book/[slug]/checkout/page.tsx`
+- `apps/web/src/app/(app)/calendar/page.tsx`
+
+---
+
 ## 2026-01-19 — Security Hardening Pre-Launch
 
 **Contexto:**  

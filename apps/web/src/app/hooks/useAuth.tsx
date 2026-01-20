@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Role } from "@/lib/rbac";
 
-type AuthUser = { email?: string; name?: string; role?: string; clinicId?: string };
+type AuthUser = { email?: string; name?: string; role?: Role; clinicId?: string };
 
 type AuthContextValue = {
   token: string | null;
@@ -29,6 +30,30 @@ const deleteCookie = (name: string) => {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const json = atob(padded);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
+
+const deriveUserFromToken = (token: string, baseUser?: AuthUser | null) => {
+  const payload = decodeJwtPayload(token);
+  const role = payload?.role as Role | undefined;
+  const clinicId = payload?.clinicId as string | undefined;
+  return {
+    ...(baseUser ?? {}),
+    role: baseUser?.role ?? role,
+    clinicId: baseUser?.clinicId ?? clinicId,
+  };
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -41,8 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(raw) as { token?: string; user?: AuthUser };
         if (parsed.token) {
+          const derivedUser = deriveUserFromToken(parsed.token, parsed.user ?? null);
           setToken(parsed.token);
-          setUser(parsed.user ?? null);
+          setUser(derivedUser);
           // Sync token to cookie for middleware access
           setCookie(COOKIE_NAME, parsed.token, COOKIE_MAX_AGE);
         }
@@ -54,12 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSession = (newToken: string, newUser?: AuthUser) => {
+    const derivedUser = deriveUserFromToken(newToken, newUser ?? null);
     setToken(newToken);
-    setUser(newUser ?? null);
+    setUser(derivedUser);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ token: newToken, user: newUser ?? null }),
+        JSON.stringify({ token: newToken, user: derivedUser }),
       );
       // Also set cookie for middleware
       setCookie(COOKIE_NAME, newToken, COOKIE_MAX_AGE);
