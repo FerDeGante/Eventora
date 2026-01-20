@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
@@ -40,7 +40,7 @@ const formatPlanFeatures = (plan: Plan): string[] => {
   return features;
 };
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedPlan = searchParams.get("plan");
@@ -670,3 +670,11 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0 auto",
   },
 };
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div style={styles.container}><div style={styles.loading}>Cargando...</div></div>}>
+      <SignupContent />
+    </Suspense>
+  );
+}

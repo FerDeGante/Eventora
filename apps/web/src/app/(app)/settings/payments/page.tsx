@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   getConnectStatus,
@@ -307,7 +307,7 @@ const ShieldIcon = () => (
 // ============================================
 // COMPONENT
 // ============================================
-export default function PaymentsSettingsPage() {
+function PaymentsSettingsContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<ConnectStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -574,5 +574,13 @@ export default function PaymentsSettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PaymentsSettingsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Cargando configuración...</div>}>
+      <PaymentsSettingsContent />
+    </Suspense>
   );
 }
