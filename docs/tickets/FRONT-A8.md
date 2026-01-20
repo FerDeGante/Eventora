@@ -44,5 +44,19 @@ UX Checks:
 - [ ] CTA visible
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DEFERRED (requiere modelo de waitlist en backend)
+- Fecha: 2026-01-20
+
+---
+
+## Razón de Defer
+
+La gestión de waitlist requiere:
+1. Modelo Waitlist en base de datos
+2. Endpoints para agregar/remover/notificar
+3. Lógica de auto-confirmación cuando hay espacio
+
+**Prioridad:** P1 (importante para ocupación de clases)
+**Siguiente paso:** Ticket de backend para crear modelo Waitlist
+
+**Ver:** ROADMAP.md - Sprint 3

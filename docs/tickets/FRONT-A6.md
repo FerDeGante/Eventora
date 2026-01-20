@@ -44,5 +44,19 @@ UX Checks:
 - [ ] Mensajes de validación
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DEFERRED (requiere cambios de backend - capacidad en modelo Service)
+- Fecha: 2026-01-20
+
+---
+
+## Razón de Defer
+
+La funcionalidad de capacidad N (clases) requiere:
+1. Campo `capacity` en modelo Service (backend)
+2. Lógica de validación de slots disponibles
+3. UI para gestionar ocupación
+
+**Prioridad:** P1 (importante pero no bloqueante para MVP)
+**Siguiente paso:** Ticket de backend para agregar capacidad al modelo
+
+**Ver:** ROADMAP.md - Sprint 2

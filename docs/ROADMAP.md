@@ -124,14 +124,14 @@
 ### Frontend - Prioridad P0 (CRÍTICO - Bloquea Launch)
 | Ticket | Tarea | Días | Estado |
 |--------|-------|------|--------|
-| FRONT-A1 | Multi-Tenant Guards Frontend | 3 | TODO |
-| FRONT-A2 | RBAC Visual Completo | 4 | TODO |
-| FRONT-A3 | Check-in / Check-out Flow | 3 | TODO |
-| FRONT-A4 | Instrumentación KPIs (time-to-cash) | 2 | TODO |
-| FRONT-A5 | Frontdesk Day Sheet | 3 | TODO |
-| FRONT-A6 | Booking Wizard - Capacidad N (Clases) | 4 | TODO |
-| FRONT-A7 | Wallet / Credits Balance View | 3 | TODO |
-| FRONT-A8 | Waitlist Management | 3 | TODO |
+| FRONT-A1 | Multi-Tenant Guards Frontend | 3 | DONE |
+| FRONT-A2 | RBAC Visual Completo | 4 | DONE (T-0012) |
+| FRONT-A3 | Check-in / Check-out Flow | 3 | DONE |
+| FRONT-A4 | Instrumentación KPIs (time-to-cash) | 2 | DONE (T-0013) |
+| FRONT-A5 | Frontdesk Day Sheet | 3 | PARTIAL (v2) |
+| FRONT-A6 | Booking Wizard - Capacidad N (Clases) | 4 | DEFERRED |
+| FRONT-A7 | Wallet / Credits Balance View | 3 | DEFERRED |
+| FRONT-A8 | Waitlist Management | 3 | DEFERRED |
 
 ### Frontend - Prioridad P1 (Mejoras UX/DX)
 | Ticket | Tarea | Días | Estado |

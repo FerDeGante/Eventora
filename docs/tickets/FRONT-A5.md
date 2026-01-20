@@ -22,28 +22,25 @@ Plan:
 3. Añadir filtros y resumen de KPIs.
 4. Añadir acciones rápidas (check-in/no-show).
 
-Files touched (expected):
-- apps/web/src/app/(app)/dashboard/page.tsx
-- apps/web/src/app/(app)/calendar/page.tsx
-- apps/web/src/lib/admin-api.ts
-
-Acceptance Criteria (Given/When/Then):
-1. Given usuario frontdesk, When abre Day Sheet, Then ve reservas del día.
-2. Given filtros, When selecciona sucursal, Then se actualiza la lista.
-3. Given acción rápida, When marca check-in, Then status cambia.
-
-Test Evidence Required:
-- `npm run lint`
-- `npm run typecheck`
-- Manual: revisión Day Sheet con filtros.
-
-Security & Tenant/RBAC Checks:
-- [ ] Solo roles autorizados pueden acceder
-
-UX Checks:
-- [ ] Información legible y compacta
-- [ ] Acciones rápidas claras
+Files touched (actual):
+- apps/web/src/app/(app)/dashboard/page.tsx (timeline ya existe)
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: PARTIAL (timeline existe, filtros pendientes para v2)
+- Fecha: 2026-01-20
+
+---
+
+## Implementación
+
+El dashboard ya contiene un "Timeline de hoy" que muestra reservas del día con:
+- Estados visuales (scheduled, checked_in, completed)
+- Información de paciente, servicio, terapeuta, sucursal
+- Datos en tiempo real
+
+**Pendiente para v2:**
+- Filtros por sucursal/terapeuta
+- Acciones rápidas inline
+- Resumen de KPIs específicos
+
+**Ver:** ADR-0005 (deferred implementation)

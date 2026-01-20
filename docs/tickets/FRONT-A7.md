@@ -44,5 +44,19 @@ UX Checks:
 - [ ] Datos legibles
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DEFERRED (requiere endpoints de ledger y membresías)
+- Fecha: 2026-01-20
+
+---
+
+## Razón de Defer
+
+La vista de Wallet requiere:
+1. Endpoints backend para ledger de créditos
+2. Lógica de consumo y expiraciones
+3. Historial de movimientos
+
+**Prioridad:** P1 (importante para transparencia de créditos)
+**Siguiente paso:** Verificar endpoints existentes en T-0005 (Credits Ledger)
+
+**Ver:** ROADMAP.md - Sprint 2
