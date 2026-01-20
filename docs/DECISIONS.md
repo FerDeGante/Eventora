@@ -159,6 +159,30 @@ Existe `/dashboard-improved` con mock data para gráficas avanzadas (reservation
 
 ---
 
+## 2026-01-22 — Integración real para FRONT-B1, B2 y B3
+
+**Contexto:**  
+Las vistas de administración de reservas, dashboard mejorado y Stripe Connect dependían de mock data o estados incompletos, lo que impedía validar operaciones reales y monitorear pagos.
+
+**Decisiones:**
+1. **Reservas admin (FRONT-B1):** conectar `/admin/reservations-management` al API real con paginación básica, filtros conectados a query params y fallback local para búsqueda por texto/servicio.
+2. **Dashboard mejorado (FRONT-B2):** consumir endpoints de analytics con rango de fechas, mostrar estados de carga/empty/error y alinear subtítulos de charts al rango seleccionado.
+3. **Stripe Connect (FRONT-B3):** ampliar el status panel con requisitos pendientes y salud de webhooks, y reforzar el flujo de reintento de onboarding cuando hay bloqueos.
+
+**Consecuencias:**
+- Datos reales visibles sin esperar consolidación del backend del dashboard principal.
+- UX de pagos más transparente (estado, bloqueos y señales de webhooks).
+- Paginación y filtros listos para escalar volumen de reservas.
+
+**Archivos modificados:**
+- `apps/web/src/app/(app)/admin/reservations-management/page.tsx`
+- `apps/web/src/app/(app)/dashboard-improved/page.tsx`
+- `apps/web/src/app/components/dashboard/Charts.tsx`
+- `apps/web/src/app/(app)/settings/payments/page.tsx`
+- `apps/web/src/lib/admin-api.ts`
+
+---
+
 ## 2026-01-21 — Frontend RBAC Guardrails (UI + rutas)
 
 **Contexto:**  

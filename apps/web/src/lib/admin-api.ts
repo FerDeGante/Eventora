@@ -41,8 +41,38 @@ export type DashboardOverviewResponse = {
   fallback?: boolean;
 };
 
+export type ReservationsAnalyticsPoint = {
+  date: string;
+  reservations: number;
+  completed: number;
+  cancelled: number;
+};
+
+export type RevenueAnalyticsPoint = {
+  period: string;
+  stripe: number;
+  pos: number;
+  cash: number;
+};
+
 export async function getDashboardOverview() {
   return apiFetch<DashboardOverviewResponse>("/api/v1/dashboard/overview");
+}
+
+export async function getReservationsAnalytics(params?: { start?: string; end?: string }) {
+  const searchParams = new URLSearchParams();
+  if (params?.start) searchParams.set("start", params.start);
+  if (params?.end) searchParams.set("end", params.end);
+  const query = searchParams.toString();
+  return apiFetch<ReservationsAnalyticsPoint[]>(`/api/v1/analytics/reservations${query ? `?${query}` : ""}`);
+}
+
+export async function getRevenueAnalytics(params?: { start?: string; end?: string }) {
+  const searchParams = new URLSearchParams();
+  if (params?.start) searchParams.set("start", params.start);
+  if (params?.end) searchParams.set("end", params.end);
+  const query = searchParams.toString();
+  return apiFetch<RevenueAnalyticsPoint[]>(`/api/v1/analytics/revenue${query ? `?${query}` : ""}`);
 }
 
 export async function getPosTickets() {
@@ -596,6 +626,9 @@ export type ConnectStatus = {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   accountId?: string;
+  detailsSubmitted?: boolean;
+  requirementsDue?: string[];
+  disabledReason?: string | null;
 };
 
 export type ConnectOnboardingResponse = {
@@ -605,20 +638,38 @@ export type ConnectOnboardingResponse = {
 };
 
 export async function getConnectStatus() {
-  return apiFetch<ConnectStatus>("/api/v1/connect/status");
+  return apiFetch<ConnectStatus>("/api/v1/stripe/connect/status");
 }
 
 export async function startConnectOnboarding(refreshUrl: string, returnUrl: string) {
-  return apiFetch<ConnectOnboardingResponse>("/api/v1/connect/onboarding", {
+  return apiFetch<ConnectOnboardingResponse>("/api/v1/stripe/connect/onboarding", {
     method: "POST",
     json: { refreshUrl, returnUrl },
   });
 }
 
 export async function getStripeDashboardLink() {
-  return apiFetch<{ url: string }>("/api/v1/connect/dashboard-link", {
+  return apiFetch<{ url: string }>("/api/v1/stripe/connect/dashboard-link", {
     method: "POST",
   });
+}
+
+export type StripeWebhookEvent = {
+  id: string;
+  type: string;
+  createdAt: string;
+  status?: string;
+};
+
+export type StripeWebhookHealth = {
+  status: "healthy" | "degraded" | "missing" | "unknown";
+  lastEventAt?: string;
+  lastEventType?: string;
+  events?: StripeWebhookEvent[];
+};
+
+export async function getStripeWebhookHealth() {
+  return apiFetch<StripeWebhookHealth>("/api/v1/stripe/webhooks/health");
 }
 
 // ============================================

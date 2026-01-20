@@ -1,34 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { StatCard, StatGrid } from '../../components/dashboard/StatCard';
 import { ReservationsChart, RevenueChart } from '../../components/dashboard/Charts';
 import { DateRangePicker } from '../../components/dashboard/DateRangePicker';
-import { subDays } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { getReservationsAnalytics, getRevenueAnalytics } from '@/lib/admin-api';
 
-// Mock data - en producción esto vendría de la API
-const mockReservationsData = [
-  { date: '24 Nov', reservations: 45, completed: 38, cancelled: 5 },
-  { date: '25 Nov', reservations: 52, completed: 45, cancelled: 4 },
-  { date: '26 Nov', reservations: 48, completed: 42, cancelled: 3 },
-  { date: '27 Nov', reservations: 61, completed: 55, cancelled: 4 },
-  { date: '28 Nov', reservations: 58, completed: 51, cancelled: 6 },
-  { date: '29 Nov', reservations: 54, completed: 48, cancelled: 2 },
-  { date: '30 Nov', reservations: 67, completed: 59, cancelled: 5 },
-];
-
-const mockRevenueData = [
-  { period: 'Sem 1', stripe: 142000, pos: 58000, cash: 23000 },
-  { period: 'Sem 2', stripe: 156000, pos: 62000, cash: 28000 },
-  { period: 'Sem 3', stripe: 168000, pos: 71000, cash: 31000 },
-  { period: 'Sem 4', stripe: 175000, pos: 69000, cash: 26000 },
-];
+const ChartState = ({ title, subtitle, message }: { title: string; subtitle: string; message: string }) => (
+  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+    <div style={{ marginBottom: '1.5rem' }}>
+      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+        {title}
+      </h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+        {subtitle}
+      </p>
+    </div>
+    <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
+      {message}
+    </div>
+  </div>
+);
 
 export default function ImprovedDashboard() {
   const [dateRange, setDateRange] = useState({
     from: subDays(new Date(), 6),
     to: new Date(),
   });
+
+  const analyticsRange = useMemo(() => ({
+    start: format(dateRange.from, 'yyyy-MM-dd'),
+    end: format(dateRange.to, 'yyyy-MM-dd'),
+  }), [dateRange]);
+
+  const rangeLabel = useMemo(() => (
+    `${format(dateRange.from, 'dd MMM', { locale: es })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: es })}`
+  ), [dateRange]);
+
+  const reservationsQuery = useQuery({
+    queryKey: ['dashboard-improved-reservations', analyticsRange.start, analyticsRange.end],
+    queryFn: () => getReservationsAnalytics(analyticsRange),
+  });
+
+  const revenueQuery = useQuery({
+    queryKey: ['dashboard-improved-revenue', analyticsRange.start, analyticsRange.end],
+    queryFn: () => getRevenueAnalytics(analyticsRange),
+  });
+
+  const reservationsData = reservationsQuery.data ?? [];
+  const revenueData = revenueQuery.data ?? [];
 
   return (
     <div className="container section-spacing">
@@ -83,8 +106,31 @@ export default function ImprovedDashboard() {
 
       {/* Charts Grid - Responsive: stacks on mobile, side by side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        <ReservationsChart data={mockReservationsData} />
-        <RevenueChart data={mockRevenueData} />
+        {reservationsQuery.isLoading && (
+          <ChartState title="Reservas por día" subtitle={rangeLabel} message="Cargando datos de reservas..." />
+        )}
+        {reservationsQuery.isError && (
+          <ChartState title="Reservas por día" subtitle={rangeLabel} message="No pudimos cargar el histórico de reservas." />
+        )}
+        {!reservationsQuery.isLoading && !reservationsQuery.isError && reservationsData.length === 0 && (
+          <ChartState title="Reservas por día" subtitle={rangeLabel} message="No hay reservas en el rango seleccionado." />
+        )}
+        {!reservationsQuery.isLoading && !reservationsQuery.isError && reservationsData.length > 0 && (
+          <ReservationsChart data={reservationsData} subtitle={rangeLabel} />
+        )}
+
+        {revenueQuery.isLoading && (
+          <ChartState title="Ingresos por método de pago" subtitle={rangeLabel} message="Cargando datos de ingresos..." />
+        )}
+        {revenueQuery.isError && (
+          <ChartState title="Ingresos por método de pago" subtitle={rangeLabel} message="No pudimos cargar el histórico de ingresos." />
+        )}
+        {!revenueQuery.isLoading && !revenueQuery.isError && revenueData.length === 0 && (
+          <ChartState title="Ingresos por método de pago" subtitle={rangeLabel} message="No hay ingresos en el rango seleccionado." />
+        )}
+        {!revenueQuery.isLoading && !revenueQuery.isError && revenueData.length > 0 && (
+          <RevenueChart data={revenueData} subtitle={rangeLabel} />
+        )}
       </div>
 
       {/* Additional Stats - Responsive: 1 col mobile, 2 cols tablet, 3 cols desktop */}

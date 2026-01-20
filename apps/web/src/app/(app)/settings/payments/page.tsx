@@ -6,7 +6,9 @@ import {
   getConnectStatus,
   startConnectOnboarding,
   getStripeDashboardLink,
+  getStripeWebhookHealth,
   type ConnectStatus,
+  type StripeWebhookHealth,
 } from "@/lib/admin-api";
 
 // ============================================
@@ -104,17 +106,26 @@ const styles = {
     alignItems: "center",
     gap: "0.5rem",
   } as React.CSSProperties,
-  statusBadge: (success: boolean) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "0.25rem",
-    padding: "0.25rem 0.625rem",
-    borderRadius: "9999px",
-    fontSize: "0.75rem",
-    fontWeight: 500,
-    background: success ? "#dcfce7" : "#fef3c7",
-    color: success ? "#15803d" : "#b45309",
-  }) as React.CSSProperties,
+  statusBadge: (tone: "success" | "warning" | "danger" | "info") => {
+    const palette = {
+      success: { bg: "#dcfce7", text: "#15803d" },
+      warning: { bg: "#fef3c7", text: "#b45309" },
+      danger: { bg: "#fee2e2", text: "#b91c1c" },
+      info: { bg: "#dbeafe", text: "#1d4ed8" },
+    };
+    const colors = palette[tone];
+    return {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "0.25rem",
+      padding: "0.25rem 0.625rem",
+      borderRadius: "9999px",
+      fontSize: "0.75rem",
+      fontWeight: 500,
+      background: colors.bg,
+      color: colors.text,
+    } as React.CSSProperties;
+  },
   primaryButton: {
     background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
     color: "white",
@@ -313,17 +324,34 @@ function PaymentsSettingsContent() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [webhookHealth, setWebhookHealth] = useState<StripeWebhookHealth | null>(null);
+  const [webhookError, setWebhookError] = useState<string | null>(null);
 
   // Check for success/refresh from Stripe redirect
   const stripeResult = searchParams.get("stripe");
 
   // Load status
   const loadStatus = useCallback(async () => {
+    setLoading(true);
+    setWebhookError(null);
     try {
-      const data = await getConnectStatus();
-      setStatus(data);
+      const [statusResult, webhookResult] = await Promise.allSettled([
+        getConnectStatus(),
+        getStripeWebhookHealth(),
+      ]);
+      if (statusResult.status === "fulfilled") {
+        setStatus(statusResult.value);
+      } else {
+        throw statusResult.reason;
+      }
+      if (webhookResult.status === "fulfilled") {
+        setWebhookHealth(webhookResult.value);
+      } else {
+        setWebhookError("No pudimos validar los webhooks.");
+      }
     } catch (err) {
       console.error("Failed to load Connect status:", err);
+      setError("No pudimos cargar el estado de Stripe. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -374,6 +402,23 @@ function PaymentsSettingsContent() {
   }
 
   const isFullyConnected = status?.connected && status?.onboardingComplete && status?.chargesEnabled;
+  const onboardingBlocked = status?.connected && !status?.onboardingComplete;
+  const needsAttention = status?.connected && (!status?.chargesEnabled || !status?.payoutsEnabled);
+  const webhookStatus = webhookHealth?.status ?? "unknown";
+
+  const webhookBadgeTone = (() => {
+    if (webhookStatus === "healthy") return "success";
+    if (webhookStatus === "degraded") return "warning";
+    if (webhookStatus === "missing") return "danger";
+    return "info";
+  })();
+
+  const formatEventTimestamp = (value?: string) => {
+    if (!value) return "Sin eventos registrados";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString("es-MX");
+  };
 
   return (
     <div style={styles.container}>
@@ -418,6 +463,17 @@ function PaymentsSettingsContent() {
         </div>
       )}
 
+      {onboardingBlocked && (
+        <div style={styles.alert("warning")}>
+          <AlertIcon />
+          <div>
+            <strong>Acción requerida</strong>
+            <br />
+            Completa la verificación de Stripe para habilitar cobros y retiros.
+          </div>
+        </div>
+      )}
+
       {/* Connected Banner */}
       {isFullyConnected && (
         <div style={styles.connectedBanner}>
@@ -450,7 +506,7 @@ function PaymentsSettingsContent() {
             <span style={styles.statusLabel}>
               <CreditCardIcon /> Cuenta Conectada
             </span>
-            <span style={styles.statusBadge(!!status?.connected)}>
+            <span style={styles.statusBadge(status?.connected ? "success" : "warning")}>
               <CheckIcon />
               {status?.connected ? "Sí" : "No"}
             </span>
@@ -460,7 +516,7 @@ function PaymentsSettingsContent() {
             <span style={styles.statusLabel}>
               <ShieldIcon /> Verificación Completa
             </span>
-            <span style={styles.statusBadge(!!status?.onboardingComplete)}>
+            <span style={styles.statusBadge(status?.onboardingComplete ? "success" : "warning")}>
               <CheckIcon />
               {status?.onboardingComplete ? "Sí" : "Pendiente"}
             </span>
@@ -470,7 +526,7 @@ function PaymentsSettingsContent() {
             <span style={styles.statusLabel}>
               <CreditCardIcon /> Cobros Habilitados
             </span>
-            <span style={styles.statusBadge(!!status?.chargesEnabled)}>
+            <span style={styles.statusBadge(status?.chargesEnabled ? "success" : "warning")}>
               <CheckIcon />
               {status?.chargesEnabled ? "Sí" : "No"}
             </span>
@@ -480,11 +536,22 @@ function PaymentsSettingsContent() {
             <span style={styles.statusLabel}>
               <DollarIcon /> Retiros Habilitados
             </span>
-            <span style={styles.statusBadge(!!status?.payoutsEnabled)}>
+            <span style={styles.statusBadge(status?.payoutsEnabled ? "success" : "warning")}>
               <CheckIcon />
               {status?.payoutsEnabled ? "Sí" : "No"}
             </span>
           </div>
+
+          {status?.requirementsDue && status.requirementsDue.length > 0 && (
+            <div style={{ marginTop: "1rem", fontSize: "0.875rem", color: "#374151" }}>
+              <strong>Requisitos pendientes:</strong>
+              <ul style={{ margin: "0.5rem 0 0 1rem", padding: 0 }}>
+                {status.requirementsDue.map((req) => (
+                  <li key={req}>{req}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div style={styles.cardFooter}>
@@ -505,7 +572,7 @@ function PaymentsSettingsContent() {
               onClick={handleConnect}
               disabled={connecting}
             >
-              {connecting ? "Conectando..." : "Continuar Onboarding"}
+              {connecting ? "Conectando..." : "Reintentar Onboarding"}
               <ExternalLinkIcon />
             </button>
           )}
@@ -573,6 +640,77 @@ function PaymentsSettingsContent() {
           </div>
         </div>
       )}
+
+      {/* Webhook Health */}
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <div style={styles.stripeLogo}>⏱</div>
+          <div>
+            <h2 style={styles.cardTitle}>Salud de Webhooks</h2>
+            <p style={styles.cardSubtitle}>
+              Monitoreo de eventos recientes de Stripe
+            </p>
+          </div>
+        </div>
+        <div style={styles.cardBody}>
+          {webhookError && (
+            <div style={styles.alert("warning")}>
+              <AlertIcon />
+              <div>{webhookError}</div>
+            </div>
+          )}
+          <div style={styles.statusRow}>
+            <span style={styles.statusLabel}>
+              <ShieldIcon /> Estado de entrega
+            </span>
+            <span style={styles.statusBadge(webhookBadgeTone)}>
+              <CheckIcon />
+              {webhookStatus === "healthy" && "Activo"}
+              {webhookStatus === "degraded" && "Inestable"}
+              {webhookStatus === "missing" && "Sin eventos"}
+              {webhookStatus === "unknown" && "Sin datos"}
+            </span>
+          </div>
+          <div style={styles.statusRow}>
+            <span style={styles.statusLabel}>
+              <AlertIcon /> Último evento
+            </span>
+            <span style={{ fontSize: "0.875rem", color: "#374151" }}>
+              {formatEventTimestamp(webhookHealth?.lastEventAt)}
+            </span>
+          </div>
+          <div style={{ ...styles.statusRow, borderBottom: "none" }}>
+            <span style={styles.statusLabel}>
+              <CreditCardIcon /> Tipo de evento
+            </span>
+            <span style={{ fontSize: "0.875rem", color: "#374151" }}>
+              {webhookHealth?.lastEventType ?? "Sin datos"}
+            </span>
+          </div>
+          {webhookHealth?.events && webhookHealth.events.length > 0 && (
+            <div style={{ marginTop: "1rem" }}>
+              <h4 style={{ margin: "0 0 0.5rem", fontSize: "0.875rem", color: "#374151" }}>
+                Últimos eventos recibidos
+              </h4>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                {webhookHealth.events.slice(0, 5).map((event) => (
+                  <li key={event.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid #f3f4f6", fontSize: "0.875rem" }}>
+                    <strong>{event.type}</strong> — {formatEventTimestamp(event.createdAt)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        {needsAttention && (
+          <div style={styles.cardFooter}>
+            <button style={styles.stripeButton} onClick={handleConnect} disabled={connecting}>
+              {connecting ? "Conectando..." : "Finalizar configuración"}
+              <ExternalLinkIcon />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

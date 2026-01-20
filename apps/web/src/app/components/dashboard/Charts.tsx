@@ -9,9 +9,10 @@ interface ReservationsChartProps {
     completed: number;
     cancelled: number;
   }>;
+  subtitle?: string;
 }
 
-export function ReservationsChart({ data }: ReservationsChartProps) {
+export function ReservationsChart({ data, subtitle }: ReservationsChartProps) {
   return (
     <div className="glass-panel" style={{ padding: '1.5rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
@@ -19,7 +20,7 @@ export function ReservationsChart({ data }: ReservationsChartProps) {
           Reservas por día
         </h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          Últimos 7 días
+          {subtitle ?? 'Últimos 7 días'}
         </p>
       </div>
 
@@ -86,9 +87,10 @@ interface RevenueChartProps {
     pos: number;
     cash: number;
   }>;
+  subtitle?: string;
 }
 
-export function RevenueChart({ data }: RevenueChartProps) {
+export function RevenueChart({ data, subtitle }: RevenueChartProps) {
   return (
     <div className="glass-panel" style={{ padding: '1.5rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
@@ -96,7 +98,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           Ingresos por método de pago
         </h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          Últimas 4 semanas
+          {subtitle ?? 'Últimas 4 semanas'}
         </p>
       </div>
 
