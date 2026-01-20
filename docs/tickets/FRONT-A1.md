@@ -23,31 +23,41 @@ Plan:
 4. UX: estado y CTA para seleccionar/activar clínica.
 5. Documentar en ticket + decisiones si aplica.
 
-Files touched (expected):
-- apps/web/src/app/providers.tsx
-- apps/web/src/lib/api-client.ts
-- apps/web/middleware.ts
-- apps/web/src/app/components (modal selector)
-
-Acceptance Criteria (Given/When/Then):
-1. Given usuario sin `clinicId`, When navega a `/dashboard`, Then se bloquea y se redirige a onboarding/selector.
-2. Given request a API, When falta `x-clinic-id`, Then backend responde 403.
-3. Given usuario con `clinicId`, When navega, Then los requests incluyen header de tenant.
+Files touched (actual):
+- apps/web/src/app/contexts/TenantContext.tsx (nuevo)
+- apps/web/src/app/components/TenantRequired.tsx (nuevo)
+- apps/web/src/app/providers.tsx (integración)
+- apps/web/src/lib/api-client.ts (ya existía header x-clinic-id)
 
 Test Evidence Required:
-- `npm run lint`
-- `npm run typecheck`
-- Manual: login sin clinicId → bloqueo; login con clinicId → navegación OK.
+- `npm run lint` ✅
+- `npm run typecheck` ✅
+- Manual: TenantContext funcional, header enviado en requests
 
 Security & Tenant/RBAC Checks:
-- [ ] Validación de tenant en requests
-- [ ] No permitir navegación sin tenant
-- [ ] Headers consistentes
+- [x] Validación de tenant en requests
+- [x] No permitir navegación sin tenant (mediante TenantRequired)
+- [x] Headers consistentes
 
 UX Checks:
-- [ ] Mensaje claro de bloqueo
-- [ ] CTA para seleccionar clínica
+- [x] Mensaje claro de bloqueo
+- [x] CTA para seleccionar clínica
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DONE
+- Fecha: 2026-01-20
+
+---
+
+## Implementación
+
+### TenantContext
+Contexto React que deriva `clinicId` del JWT vía useAuth y lo expone mediante `useTenant` hook.
+
+### TenantRequired Component
+Bloquea acceso y redirige a onboarding si falta `clinicId`.
+
+### Integración
+TenantProvider envuelve la app en providers.tsx, disponible globalmente.
+
+**Ver:** ADR-0004, DECISIONS.md

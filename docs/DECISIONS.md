@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-01-20 — Multi-Tenant Context Frontend
+
+**Contexto:**  
+El `clinicId` se derivaba implícitamente del token JWT pero no había contexto explícito ni validación consistente en frontend.
+
+**Opciones consideradas:**
+1. Validar solo en middleware (rechazado: no tiene acceso a localStorage)
+2. Derivar en cada componente (rechazado: duplicación)
+3. TenantContext centralizado (elegido)
+
+**Decisión:**  
+Crear TenantContext que deriva `clinicId` del JWT y lo expone vía hook `useTenant`. Componente `TenantRequired` bloquea acceso si falta tenant.
+
+**Consecuencias:**
+- Single source of truth para clinicId
+- UX clara cuando falta configuración
+- Type-safety en consumo
+
+**Archivos modificados:**
+- `apps/web/src/app/contexts/TenantContext.tsx`
+- `apps/web/src/app/components/TenantRequired.tsx`
+- `apps/web/src/app/providers.tsx`
+
+**Ver:** ADR-0004
+
+---
+
 ## 2026-01-21 — Frontend RBAC Guardrails (UI + rutas)
 
 **Contexto:**  

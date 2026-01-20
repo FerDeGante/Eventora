@@ -46,5 +46,16 @@ UX Checks:
 - [ ] Eventos no bloquean UI
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DONE (implementado en T-0013)
+- Fecha: 2026-01-20
+
+---
+
+## Evidencia de Implementación
+
+Implementado como parte de T-0013. Ver:
+- apps/web/src/app/book/[slug]/page.tsx
+- apps/web/src/app/book/[slug]/checkout/page.tsx
+- apps/web/src/app/(app)/calendar/page.tsx
+
+Eventos UX para KPIs de time-to-cash implementados.

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import { AuthProvider } from "./hooks/useAuth";
+import { TenantProvider } from "./contexts/TenantContext";
 import { sendObsEvent } from "../lib/observability";
 
 export type ThemeMode = "light" | "dark";
@@ -71,9 +72,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <AuthProvider>
-        <ThemeContext.Provider value={value}>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </ThemeContext.Provider>
+        <TenantProvider>
+          <ThemeContext.Provider value={value}>
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          </ThemeContext.Provider>
+        </TenantProvider>
       </AuthProvider>
     </SessionProvider>
   );

@@ -50,5 +50,17 @@ UX Checks:
 - [ ] CTA de retorno
 
 Status:
-- Estado: TODO
-- Fecha: 2026-01-21
+- Estado: DONE (implementado en T-0012)
+- Fecha: 2026-01-20
+
+---
+
+## Evidencia de Implementación
+
+Implementado como parte de T-0012. Ver:
+- apps/web/src/lib/rbac.ts
+- apps/web/src/app/components/AccessDenied.tsx
+- apps/web/src/app/components/shell/AppChrome.tsx
+- apps/web/middleware.ts
+
+Funcionalidad completa de RBAC visual con guards, matriz de permisos y feedback.
