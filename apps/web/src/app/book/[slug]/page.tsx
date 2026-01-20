@@ -29,6 +29,7 @@ type BookingFormData = {
   email: string;
   phone: string;
   notes: string;
+  coachPreference: string;
 };
 
 // Helper to adjust color brightness
@@ -108,6 +109,7 @@ export default function BookingWidget() {
     email: "",
     phone: "",
     notes: "",
+    coachPreference: "",
   });
 
   // Success
@@ -239,6 +241,11 @@ export default function BookingWidget() {
       return;
     }
 
+    const coachNote = formData.coachPreference?.trim()
+      ? `Coach preferido: ${formData.coachPreference.trim()}`
+      : "";
+    const combinedNotes = [formData.notes?.trim(), coachNote].filter(Boolean).join(" | ");
+
     setSubmitting(true);
     setError(null);
 
@@ -257,7 +264,7 @@ export default function BookingWidget() {
           clientName: formData.name,
           clientEmail: formData.email,
           clientPhone: formData.phone || undefined,
-          notes: formData.notes || undefined,
+          notes: combinedNotes || undefined,
           requiresPayment: selectedService.basePrice > 0,
         }),
       });
@@ -336,24 +343,44 @@ export default function BookingWidget() {
           <p className={styles.headerSubtitle}>Agenda tu cita en línea</p>
         </div>
 
-        {/* Steps */}
-        <div className={styles.steps}>
-          <div
-            className={`${styles.step} ${step === 1 ? styles.stepActive : ""} ${step > 1 ? styles.stepCompleted : ""}`}
+        {/* Pill Selector */}
+        <div className={styles.pillBar} role="tablist" aria-label="Selector de reserva">
+          <button
+            type="button"
+            className={`${styles.pillButton} ${step === 1 ? styles.pillButtonActive : ""}`}
+            onClick={() => setStep(1)}
+            role="tab"
+            aria-selected={step === 1}
           >
-            1. Servicio
-          </div>
-          <div
-            className={`${styles.step} ${step === 2 ? styles.stepActive : ""} ${step > 2 ? styles.stepCompleted : ""}`}
+            <span className={styles.pillLabel}>Clase / Sesión</span>
+            <span className={styles.pillValue}>{selectedService?.name || "Elige una opción"}</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.pillButton} ${step === 2 ? styles.pillButtonActive : ""}`}
+            onClick={() => setStep(2)}
+            role="tab"
+            aria-selected={step === 2}
           >
-            2. Fecha y Hora
-          </div>
-          <div
-            className={`${styles.step} ${step === 3 ? styles.stepActive : ""} ${step > 3 ? styles.stepCompleted : ""}`}
+            <span className={styles.pillLabel}>Fecha y hora</span>
+            <span className={styles.pillValue}>
+              {selectedDate && selectedSlot
+                ? `${formatDate(selectedDate)} · ${formatTime(selectedSlot.start)}`
+                : "Selecciona día y hora"}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.pillButton} ${step === 2 ? styles.pillButtonActive : ""}`}
+            onClick={() => setStep(2)}
+            role="tab"
+            aria-selected={step === 2}
           >
-            3. Datos
-          </div>
-          <div className={`${styles.step} ${step === 4 ? styles.stepActive : ""}`}>4. Confirmado</div>
+            <span className={styles.pillLabel}>Coach</span>
+            <span className={styles.pillValue}>
+              {formData.coachPreference ? formData.coachPreference : "Sin preferencia"}
+            </span>
+          </button>
         </div>
 
         {/* Body */}
@@ -361,7 +388,7 @@ export default function BookingWidget() {
           {/* Step 1: Select Service */}
           {step === 1 && (
             <>
-              <h2 className={styles.sectionTitle}>Selecciona un servicio</h2>
+              <h2 className={styles.sectionTitle}>Elige tu clase o sesión</h2>
               <div className={styles.servicesList}>
                 {services.length === 0 ? (
                   <p className={styles.emptyState}>No hay servicios disponibles</p>
@@ -513,6 +540,19 @@ export default function BookingWidget() {
                   )}
                 </>
               )}
+
+              <div className={styles.coachSection}>
+                <h3 className={styles.sectionTitleSub}>Coach preferido</h3>
+                <p className={styles.sectionHint}>Si tienes a alguien en mente, indícalo aquí (opcional).</p>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={formData.coachPreference}
+                  onChange={(e) => setFormData({ ...formData, coachPreference: e.target.value })}
+                  placeholder="Ej. Camila R."
+                  aria-label="Coach preferido"
+                />
+              </div>
             </>
           )}
 
@@ -537,6 +577,12 @@ export default function BookingWidget() {
                   <span className={styles.summaryLabel}>Hora</span>
                   <span className={styles.summaryValue}>
                     {selectedSlot && formatTime(selectedSlot.start)}
+                  </span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Coach</span>
+                  <span className={styles.summaryValue}>
+                    {formData.coachPreference || "Sin preferencia"}
                   </span>
                 </div>
                 <div className={styles.summaryRow}>
@@ -639,6 +685,12 @@ export default function BookingWidget() {
                   </span>
                 </div>
                 <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Coach</span>
+                  <span className={styles.summaryValue}>
+                    {formData.coachPreference || "Sin preferencia"}
+                  </span>
+                </div>
+                <div className={styles.summaryRow}>
                   <span className={styles.summaryLabel}>Código</span>
                   <span className={styles.summaryValueMono}>
                     {bookingId?.slice(0, 8).toUpperCase()}
@@ -652,7 +704,7 @@ export default function BookingWidget() {
                   setSelectedService(null);
                   setSelectedDate(null);
                   setSelectedSlot(null);
-                  setFormData({ name: "", email: "", phone: "", notes: "" });
+                  setFormData({ name: "", email: "", phone: "", notes: "", coachPreference: "" });
                   setBookingId(null);
                 }}
                 className={styles.fullWidthButton}
