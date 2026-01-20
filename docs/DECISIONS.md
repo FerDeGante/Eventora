@@ -31,6 +31,38 @@ Crear TenantContext que deriva `clinicId` del JWT y lo expone vía hook `useTena
 
 ---
 
+## 2026-01-20 — Frontend Implementation Strategy for A5-A8
+
+**Contexto:**  
+Tickets FRONT-A5 (Day Sheet), A6 (Capacity), A7 (Wallet), A8 (Waitlist) fueron inicialmente marcados como deferred por dependencias de backend. Sin embargo, podíamos implementar UIs completas con datos mock para validar UX y preparar integración.
+
+**Opciones consideradas:**
+1. Esperar backend completo (rechazado: bloquea validación UX)
+2. Placeholders mínimos (rechazado: no permite testing real)
+3. UIs completas con mock data (elegido)
+
+**Decisión:**  
+Implementar todas las UIs completas con:
+- Componentes funcionales con TypeScript types
+- Mock data que replica estructura de API esperada
+- Integración preparada (solo swap mock por API calls)
+
+**Consecuencias:**
+- Validación UX inmediata con stakeholders
+- Frontend y backend pueden avanzar en paralelo
+- Contratos de API claramente definidos
+- Integración simplificada cuando backend esté listo
+
+**Componentes creados:**
+- Day Sheet: DaySheetContainer, DaySheetFilters, DaySheetActions
+- Capacity: Campo en formulario y tabla de servicios
+- Wallet: Página completa con balance y movimientos
+- Waitlist: WaitlistPanel + página de gestión
+
+**Ver:** ADR-0005
+
+---
+
 ## 2026-01-21 — Frontend RBAC Guardrails (UI + rutas)
 
 **Contexto:**  

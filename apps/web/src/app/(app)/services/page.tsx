@@ -406,6 +406,7 @@ type ServiceFormData = {
   basePrice: number;
   categoryId: string;
   isPackageable: boolean;
+  capacity?: number | null; // For group services (classes)
 };
 
 type CategoryFormData = {
@@ -440,6 +441,7 @@ export default function ServicesPage() {
     basePrice: 0,
     categoryId: "",
     isPackageable: true,
+    capacity: null, // null = 1-on-1 service, number = group class
   });
 
   const [categoryForm, setCategoryForm] = useState<CategoryFormData>({
@@ -505,6 +507,7 @@ export default function ServicesPage() {
         basePrice: service.basePrice / 100, // Convert from cents
         categoryId: service.categoryId || "",
         isPackageable: service.isPackageable,
+        capacity: service.capacity || null,
       });
     } else {
       setEditingService(null);
@@ -515,6 +518,7 @@ export default function ServicesPage() {
         basePrice: 0,
         categoryId: "",
         isPackageable: true,
+        capacity: null,
       });
     }
     setShowServiceModal(true);
@@ -538,6 +542,7 @@ export default function ServicesPage() {
         basePrice: Math.round(serviceForm.basePrice * 100), // Convert to cents
         categoryId: serviceForm.categoryId || undefined,
         isPackageable: serviceForm.isPackageable,
+        capacity: serviceForm.capacity || null,
       };
 
       if (editingService) {
@@ -721,6 +726,7 @@ export default function ServicesPage() {
                 <th style={styles.th}>Categoría</th>
                 <th style={styles.th}>Duración</th>
                 <th style={styles.th}>Precio</th>
+                <th style={styles.th}>Capacidad</th>
                 <th style={styles.th}>Paqueteable</th>
                 <th style={{ ...styles.th, textAlign: "right" }}>Acciones</th>
               </tr>
@@ -755,6 +761,13 @@ export default function ServicesPage() {
                   </td>
                   <td style={styles.td}>
                     <span style={styles.price}>{formatPrice(service.basePrice)}</span>
+                  </td>
+                  <td style={styles.td}>
+                    {service.capacity ? (
+                      <span style={{ color: "#0891b2", fontWeight: 500 }}>{service.capacity} personas</span>
+                    ) : (
+                      <span style={{ color: "#9ca3af" }}>1-on-1</span>
+                    )}
                   </td>
                   <td style={styles.td}>
                     {service.isPackageable ? (
@@ -878,6 +891,29 @@ export default function ServicesPage() {
                     step="0.01"
                   />
                   <p style={styles.helpText}>Precio base del servicio</p>
+                </div>
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Capacidad (personas)</label>
+                  <input
+                    type="number"
+                    style={styles.input}
+                    value={serviceForm.capacity || ""}
+                    onChange={(e) =>
+                      setServiceForm({
+                        ...serviceForm,
+                        capacity: e.target.value ? parseInt(e.target.value) : null,
+                      })
+                    }
+                    min="1"
+                    max="100"
+                    placeholder="Dejar vacío para sesiones 1-on-1"
+                  />
+                  <p style={styles.helpText}>
+                    Para clases grupales. Dejar vacío para sesiones individuales (1-on-1)
+                  </p>
                 </div>
               </div>
 

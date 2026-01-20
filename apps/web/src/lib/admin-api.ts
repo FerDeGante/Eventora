@@ -371,6 +371,7 @@ export type Service = {
   basePrice: number;
   categoryId: string | null;
   isPackageable: boolean;
+  capacity?: number | null; // For group services (classes)
   category?: { name: string; colorHex: string | null };
 };
 
@@ -381,6 +382,7 @@ export type CreateServicePayload = {
   basePrice: number;
   categoryId?: string;
   isPackageable?: boolean;
+  capacity?: number | null; // For group services (classes)
 };
 
 export type UpdateServicePayload = Partial<CreateServicePayload>;

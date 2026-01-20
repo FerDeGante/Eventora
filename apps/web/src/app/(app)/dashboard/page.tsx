@@ -3,6 +3,7 @@ import { GlowCard } from "@/app/components/ui/GlowCard";
 import { KpiBar } from "@/app/components/ui/KpiBar";
 import { getDashboardOverview, getPosTickets, type DashboardOverviewResponse } from "@/lib/admin-api";
 import { OnboardingPanel } from "@/app/components/OnboardingPanel";
+import { DaySheetContainer } from "@/app/components/DaySheetContainer";
 
 const fallbackData: DashboardOverviewResponse = {
   stats: [
@@ -90,29 +91,7 @@ export default async function DashboardPage() {
           Conecta Stripe, POS y paquetes para sincronizar reservas y monitorear el experience score.
         </SectionHeading>
         <KpiBar stats={data.stats} />
-        <div className="dashboard-stream glass-panel">
-          <div className="dashboard-stream__header">
-            <p>Timeline de hoy</p>
-            <span>{isFallback ? "Mostrando datos locales" : "Room view holográfico"}</span>
-          </div>
-          <ul className="dashboard-timeline">
-            {data.timeline.map((event) => (
-              <li key={event.id} className={`dashboard-timeline__item is-${event.status}`}>
-                <div>
-                  <p className="dashboard-timeline__time">{event.time}</p>
-                  <p className="dashboard-timeline__patient">{event.patient}</p>
-                </div>
-                <div>
-                  <p className="dashboard-timeline__service">{event.service}</p>
-                  <p className="dashboard-timeline__meta">
-                    {event.branch} · {event.therapist}
-                  </p>
-                </div>
-                <div className="dashboard-timeline__status">{event.status}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <DaySheetContainer initialTimeline={data.timeline} isFallback={isFallback} />
       </section>
       <section className="dashboard-panel glass-panel">
         <SectionHeading eyebrow="Automation Hub" title="Integraciones críticas al día">
