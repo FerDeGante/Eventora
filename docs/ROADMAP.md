@@ -13,7 +13,7 @@
 | Backend API | 100% MVP | Ninguno (RBAC hardening cubierto T-0009) |
 | Base de Datos | 100% MVP | RLS defense-in-depth pendiente (T-0011) |
 | Seguridad | 100% | RBAC/tenant tests automatizados listos (T-0009) |
-| Frontend Web | 85% | Guardrails RBAC UI + calendario denso pendientes (T-0012, T-0016) |
+| Frontend Web | 95% | Ninguno (T-0012, T-0016 cerrados) |
 | Integraciones | 90% | SMS/Push post-MVP |
 
 ---
@@ -94,11 +94,12 @@
 - [T-0009] Hardening RBAC y multi-tenant (tests cross-tenant, roles mínimos por ruta) — ✅
 - [T-0010] QA e2e + observabilidad (booking → pago → check-in + emails + Sentry/health) — ✅
 - [T-0011] Credenciales productivas + RLS PostgreSQL — 🔴 pendiente (ops)
-- [T-0012] Guardrails RBAC en UI + rutas protegidas — 🔴 pendiente
-- [T-0013] Instrumentación KPI en booking → checkout → check-in — 🔴 pendiente
+- [T-0012] Guardrails RBAC en UI + rutas protegidas — ✅
+- [T-0013] Instrumentación KPI en booking → checkout → check-in — ✅
 - [T-0014] Booking widget + checkout alineados a Design System — ✅
 - [T-0015] Copy landing: clase vs sesión + time-to-cash — ✅
-- [T-0016] Calendario con FullCalendar + densidad legible — 🔴 pendiente
+- [T-0016] Calendario con FullCalendar + densidad legible — ✅
+- [T-0018] Booking widget estilo Airbnb (pill selector) — ✅
 - Rotar credenciales producción: Supabase, Stripe, Resend, MercadoPago, JWT_SECRET (acción usuario, parte de T-0011)
 
 **Gate:** listo para lanzamiento con cobertura de seguridad y QA.
@@ -119,7 +120,8 @@
 | T-0013 | Instrumentación KPI en booking → checkout → check-in | 🟡 P1 | DONE |
 | T-0014 | Booking widget + checkout alineados a Design System | 🟡 P1 | DONE |
 | T-0015 | Copy landing: clase vs sesión + time-to-cash | 🟡 P1 | DONE |
-| T-0016 | Calendario con FullCalendar + densidad legible | 🟡 P1 | TODO |
+| T-0016 | Calendario con FullCalendar + densidad legible | 🟡 P1 | DONE |
+| T-0018 | Booking widget estilo Airbnb (pill selector) | 🟡 P1 | DONE |
 
 ### Frontend - Prioridad P0 (CRÍTICO - Bloquea Launch)
 | Ticket | Tarea | Días | Estado |
@@ -165,7 +167,8 @@
 | B3 | Instrumentación KPI booking/checkout/check-in | T-0013 | 3h | Medición time-to-cash/no-show |
 | B4 | Booking + checkout alineados a Design System | T-0014 | 6h | ✅ Apple-like consistente |
 | B5 | Copy landing clase/sesión + time-to-cash | T-0015 | 2h | ✅ Claridad de nicho |
-| B6 | FullCalendar + densidad legible | T-0016 | 6h | Operación más clara |
+| B6 | FullCalendar + densidad legible | T-0016 | 6h | ✅ Operación más clara |
+| B7 | Booking widget estilo Airbnb (pill selector) | T-0018 | 4h | ✅ Orden de selección claro |
 
 ### 🟢 C — Deseables (Post-lanzamiento)
 | ID | Tarea | Horas |

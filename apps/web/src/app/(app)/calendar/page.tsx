@@ -1,41 +1,39 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  format, 
-  startOfWeek, 
-  endOfWeek, 
-  eachDayOfInterval, 
-  addWeeks, 
-  subWeeks,
-  isSameDay,
-  parseISO,
-  setHours,
-  addDays,
-  startOfMonth,
-  endOfMonth,
-  eachWeekOfInterval,
-  isSameMonth,
-} from "date-fns";
+import { endOfWeek, format, parseISO, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
+import type FullCalendar from "@fullcalendar/react";
+import "@fullcalendar/core/index.css";
+import "@fullcalendar/daygrid/index.css";
+import "@fullcalendar/timegrid/index.css";
 import { EventoraButton } from "@/app/components/ui/EventoraButton";
-import { getReservations, getTherapists, updateReservationStatus, createReservation, getServices, getBranches, type Reservation } from "@/lib/admin-api";
+import {
+  getReservations,
+  getTherapists,
+  updateReservationStatus,
+  createReservation,
+  getServices,
+  getBranches,
+  type Reservation,
+} from "@/lib/admin-api";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useUxMetrics } from "@/app/hooks/useUxMetrics";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  X, 
-  User, 
-  Clock, 
-  MapPin, 
-  CheckCircle, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  User,
+  Clock,
+  MapPin,
+  CheckCircle,
   XCircle,
   Calendar as CalendarIcon,
   Grid,
   List,
 } from "react-feather";
+import CalendarView, { type CalendarRangeInfo, type CalendarViewMode } from "./CalendarView";
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   PENDING: { color: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)", label: "Pendiente" },
@@ -45,55 +43,63 @@ const statusConfig: Record<string, { color: string; bg: string; label: string }>
   NO_SHOW: { color: "#6b7280", bg: "rgba(107, 114, 128, 0.15)", label: "No asistió" },
 };
 
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am - 9pm
-
-type ViewMode = "week" | "month" | "day";
-
 type NewReservationSlot = {
   date: Date;
   hour: number;
+};
+
+const viewIcons: Record<CalendarViewMode, JSX.Element> = {
+  timeGridDay: <List size={16} />,
+  timeGridWeek: <Grid size={16} />,
+  dayGridMonth: <CalendarIcon size={16} />,
+};
+
+const viewLabels: Record<CalendarViewMode, string> = {
+  timeGridDay: "Vista día",
+  timeGridWeek: "Vista semana",
+  dayGridMonth: "Vista mes",
+};
+
+const calendarViews: CalendarViewMode[] = ["timeGridDay", "timeGridWeek", "dayGridMonth"];
+
+const clampHour = (hour: number) => {
+  if (!Number.isFinite(hour)) return 9;
+  if (hour < 7) return 7;
+  if (hour > 21) return 21;
+  return hour;
 };
 
 export default function CalendarPage() {
   const queryClient = useQueryClient();
   const auth = useAuth();
   const trackUx = useUxMetrics("calendar");
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const calendarRef = useRef<FullCalendar | null>(null);
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("timeGridWeek");
   const [selectedTherapist, setSelectedTherapist] = useState<string>("");
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [newReservationSlot, setNewReservationSlot] = useState<NewReservationSlot | null>(null);
+  const [calendarTitle, setCalendarTitle] = useState<string>(format(new Date(), "MMMM yyyy", { locale: es }));
+  const [calendarRange, setCalendarRange] = useState(() => {
+    const today = new Date();
+    return {
+      start: startOfWeek(today, { weekStartsOn: 1 }),
+      end: endOfWeek(today, { weekStartsOn: 1 }),
+    };
+  });
 
-  // Calculate date range based on view
-  const dateRange = useMemo(() => {
-    if (viewMode === "week") {
-      return {
-        start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-        end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-      };
-    } else if (viewMode === "month") {
-      return {
-        start: startOfMonth(currentDate),
-        end: endOfMonth(currentDate),
-      };
-    } else {
-      return { start: currentDate, end: currentDate };
-    }
-  }, [currentDate, viewMode]);
-
-  const days = useMemo(() => {
-    if (viewMode === "day") return [currentDate];
-    return eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-  }, [dateRange, viewMode, currentDate]);
-
-  // Fetch data
   const { data: reservations = [], isLoading } = useQuery({
-    queryKey: ["reservations", format(dateRange.start, "yyyy-MM-dd"), format(dateRange.end, "yyyy-MM-dd"), selectedTherapist],
-    queryFn: () => getReservations({
-      startDate: format(dateRange.start, "yyyy-MM-dd"),
-      endDate: format(dateRange.end, "yyyy-MM-dd"),
-      therapistId: selectedTherapist || undefined,
-    }),
+    queryKey: [
+      "reservations",
+      format(calendarRange.start, "yyyy-MM-dd"),
+      format(calendarRange.end, "yyyy-MM-dd"),
+      selectedTherapist,
+    ],
+    queryFn: () =>
+      getReservations({
+        startDate: format(calendarRange.start, "yyyy-MM-dd"),
+        endDate: format(calendarRange.end, "yyyy-MM-dd"),
+        therapistId: selectedTherapist || undefined,
+      }),
   });
 
   const { data: therapists = [] } = useQuery({
@@ -102,8 +108,7 @@ export default function CalendarPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string; serviceId?: string }) =>
-      updateReservationStatus(id, status),
+    mutationFn: ({ id, status }: { id: string; status: string; serviceId?: string }) => updateReservationStatus(id, status),
     onSuccess: (_data, variables) => {
       if (variables.status === "COMPLETED" || variables.status === "NO_SHOW") {
         trackUx("action", {
@@ -119,25 +124,28 @@ export default function CalendarPage() {
     },
   });
 
-  // Navigation
-  const navigate = (direction: "prev" | "next") => {
-    if (viewMode === "week") {
-      setCurrentDate(direction === "next" ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
-    } else if (viewMode === "month") {
-      setCurrentDate(direction === "next" ? addDays(currentDate, 30) : addDays(currentDate, -30));
+  const handleCalendarNavigation = (direction: "prev" | "next") => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    if (direction === "prev") {
+      api.prev();
     } else {
-      setCurrentDate(direction === "next" ? addDays(currentDate, 1) : addDays(currentDate, -1));
+      api.next();
     }
   };
 
-  const goToToday = () => setCurrentDate(new Date());
+  const handleCalendarToday = () => {
+    calendarRef.current?.getApi()?.today();
+  };
 
-  // Get reservations for a specific day and hour
-  const getReservationsForSlot = (day: Date, hour: number) => {
-    return reservations.filter((res) => {
-      const start = parseISO(res.startAt);
-      return isSameDay(start, day) && start.getHours() === hour;
-    });
+  const handleViewChange = (mode: CalendarViewMode) => {
+    calendarRef.current?.getApi()?.changeView(mode);
+  };
+
+  const handleDatesChange = (info: CalendarRangeInfo) => {
+    setCalendarTitle(info.title);
+    setCalendarRange({ start: info.start, end: info.end });
+    setViewMode(info.viewType);
   };
 
   const handleStatusChange = (status: string) => {
@@ -146,145 +154,88 @@ export default function CalendarPage() {
     }
   };
 
+  const handleEmptyCta = () => {
+    const now = new Date();
+    const nextHour = clampHour(now.getHours() + 1);
+    setNewReservationSlot({ date: now, hour: nextHour });
+  };
+
+  const isEmptyState = useMemo(() => !isLoading && reservations.length === 0, [isLoading, reservations.length]);
+
   return (
     <div className="cal">
-      {/* Header */}
       <header className="cal-header">
         <div className="cal-header__left">
-          <h1 className="cal-title">
-            {viewMode === "month" 
-              ? format(currentDate, "MMMM yyyy", { locale: es })
-              : viewMode === "day"
-              ? format(currentDate, "EEEE, d MMMM", { locale: es })
-              : `${format(dateRange.start, "d MMM", { locale: es })} — ${format(dateRange.end, "d MMM yyyy", { locale: es })}`
-            }
-          </h1>
+          <h1 className="cal-title">{calendarTitle}</h1>
           <div className="cal-nav">
-            <button className="cal-nav__btn" onClick={() => navigate("prev")}>
+            <button className="cal-nav__btn" onClick={() => handleCalendarNavigation("prev")}> 
               <ChevronLeft size={20} />
             </button>
-            <button className="cal-nav__today" onClick={goToToday}>Hoy</button>
-            <button className="cal-nav__btn" onClick={() => navigate("next")}>
+            <button className="cal-nav__today" onClick={handleCalendarToday}>Hoy</button>
+            <button className="cal-nav__btn" onClick={() => handleCalendarNavigation("next")}> 
               <ChevronRight size={20} />
             </button>
           </div>
         </div>
 
         <div className="cal-header__right">
-          <select
-            value={selectedTherapist}
-            onChange={(e) => setSelectedTherapist(e.target.value)}
-            className="cal-filter"
-          >
+          <select value={selectedTherapist} onChange={(e) => setSelectedTherapist(e.target.value)} className="cal-filter">
             <option value="">Todos los terapeutas</option>
             {therapists.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
 
           <div className="cal-view-toggle">
-            <button 
-              className={`cal-view-btn ${viewMode === "day" ? "active" : ""}`}
-              onClick={() => setViewMode("day")}
-              title="Vista día"
-            >
-              <List size={16} />
-            </button>
-            <button 
-              className={`cal-view-btn ${viewMode === "week" ? "active" : ""}`}
-              onClick={() => setViewMode("week")}
-              title="Vista semana"
-            >
-              <Grid size={16} />
-            </button>
-            <button 
-              className={`cal-view-btn ${viewMode === "month" ? "active" : ""}`}
-              onClick={() => setViewMode("month")}
-              title="Vista mes"
-            >
-              <CalendarIcon size={16} />
-            </button>
+            {calendarViews.map((mode) => (
+              <button
+                key={mode}
+                className={`cal-view-btn ${viewMode === mode ? "active" : ""}`}
+                onClick={() => handleViewChange(mode)}
+                title={viewLabels[mode]}
+              >
+                {viewIcons[mode]}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* Calendar Grid */}
-      {isLoading ? (
-        <div className="cal-loading">
-          <div className="cal-loading__spinner" />
-          <p>Cargando reservaciones...</p>
-        </div>
-      ) : viewMode === "month" ? (
-        <MonthView 
-          currentDate={currentDate}
+      <div className="cal-body">
+        <CalendarView
+          ref={calendarRef}
           reservations={reservations}
+          statusConfig={statusConfig}
           onSelectReservation={setSelectedReservation}
-          onSelectDay={(day) => { setCurrentDate(day); setViewMode("day"); }}
+          onSelectSlot={(slot) =>
+            setNewReservationSlot({
+              date: slot.date,
+              hour: clampHour(slot.hour),
+            })
+          }
+          onDatesChange={handleDatesChange}
         />
-      ) : (
-        <div className="cal-grid">
-          {/* Time column */}
-          <div className="cal-times">
-            <div className="cal-times__header" />
-            {HOURS.map((hour) => (
-              <div key={hour} className="cal-times__slot">
-                {format(setHours(new Date(), hour), "h a")}
-              </div>
-            ))}
+
+        {isLoading && (
+          <div className="cal-loading" role="status" aria-live="polite">
+            <div className="cal-loading__spinner" />
+            <p>Cargando reservaciones...</p>
           </div>
+        )}
 
-          {/* Day columns */}
-          {days.map((day) => (
-            <div key={day.toISOString()} className="cal-day">
-              <div className={`cal-day__header ${isSameDay(day, new Date()) ? "is-today" : ""}`}>
-                <span className="cal-day__name">{format(day, "EEE", { locale: es })}</span>
-                <span className="cal-day__number">{format(day, "d")}</span>
-              </div>
-              <div className="cal-day__slots">
-                {HOURS.map((hour) => {
-                  const slotReservations = getReservationsForSlot(day, hour);
-                  return (
-                    <div 
-                      key={hour} 
-                      className="cal-slot"
-                      onClick={() => {
-                        if (slotReservations.length === 0) {
-                          setNewReservationSlot({ date: day, hour });
-                        }
-                      }}
-                      style={{ cursor: slotReservations.length === 0 ? "pointer" : "default" }}
-                    >
-                      {slotReservations.map((res) => (
-                        <button
-                          key={res.id}
-                          className="cal-event"
-                          style={{ 
-                            borderLeftColor: statusConfig[res.status]?.color,
-                            backgroundColor: statusConfig[res.status]?.bg,
-                          }}
-                          onClick={() => setSelectedReservation(res)}
-                        >
-                          <span className="cal-event__time">
-                            {format(parseISO(res.startAt), "HH:mm")}
-                          </span>
-                          <span className="cal-event__title">
-                            {res.user?.name || "Cliente"}
-                          </span>
-                          <span className="cal-event__service">
-                            {res.service?.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
+        {isEmptyState && (
+          <div className="cal-empty">
+            <div className="cal-empty__content">
+              <h2>Agenda limpia</h2>
+              <p>Este rango todavía no tiene reservaciones. Agenda la primera cita para activar la semana.</p>
+              <EventoraButton onClick={handleEmptyCta}>Crear reservación</EventoraButton>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* Legend */}
       <div className="cal-legend">
         {Object.entries(statusConfig).map(([key, config]) => (
           <span key={key} className="cal-legend__item">
@@ -294,7 +245,6 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Reservation Modal */}
       {selectedReservation && (
         <ReservationModal
           reservation={selectedReservation}
@@ -304,7 +254,6 @@ export default function CalendarPage() {
         />
       )}
 
-      {/* New Reservation Modal */}
       {newReservationSlot && (
         <NewReservationModal
           slot={newReservationSlot}
@@ -433,151 +382,27 @@ export default function CalendarPage() {
           color: white;
         }
 
-        /* Grid */
-        .cal-grid {
-          display: flex;
+        .cal-body {
+          position: relative;
           background: var(--surface-base);
           border: 1px solid var(--border-subtle);
           border-radius: 1rem;
           overflow: hidden;
-          flex: 1;
-          min-height: 600px;
+          min-height: 620px;
         }
 
-        .cal-times {
-          flex-shrink: 0;
-          width: 64px;
-          border-right: 1px solid var(--border-subtle);
-        }
-
-        .cal-times__header {
-          height: 64px;
-          border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .cal-times__slot {
-          height: 60px;
-          display: flex;
-          align-items: flex-start;
-          justify-content: flex-end;
-          padding: 0.25rem 0.75rem 0 0;
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          text-transform: lowercase;
-        }
-
-        .cal-day {
-          flex: 1;
-          min-width: 0;
-          border-right: 1px solid var(--border-subtle);
-        }
-
-        .cal-day:last-child {
-          border-right: none;
-        }
-
-        .cal-day__header {
-          height: 64px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border-bottom: 1px solid var(--border-subtle);
-          gap: 0.25rem;
-        }
-
-        .cal-day__header.is-today .cal-day__number {
-          background: var(--accent-primary);
-          color: white;
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .cal-day__name {
-          font-size: 0.75rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
-        }
-
-        .cal-day__number {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-
-        .cal-day__slots {
-          position: relative;
-        }
-
-        .cal-slot {
-          height: 60px;
-          border-bottom: 1px solid var(--border-subtle);
-          padding: 2px;
-          overflow: hidden;
-        }
-
-        .cal-slot:last-child {
-          border-bottom: none;
-        }
-
-        .cal-event {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          padding: 0.375rem 0.5rem;
-          border-radius: 0.375rem;
-          border: none;
-          border-left: 3px solid;
-          text-align: left;
-          cursor: pointer;
-          width: 100%;
-          height: 100%;
-          transition: all 0.2s;
-          overflow: hidden;
-        }
-
-        .cal-event:hover {
-          transform: scale(1.02);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .cal-event__time {
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-
-        .cal-event__title {
-          font-size: 0.8rem;
-          font-weight: 500;
-          color: var(--text-primary);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .cal-event__service {
-          font-size: 0.7rem;
-          color: var(--text-secondary);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        /* Loading */
         .cal-loading {
+          position: absolute;
+          inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          height: 400px;
           gap: 1rem;
+          background: rgba(2, 6, 23, 0.6);
           color: var(--text-muted);
+          backdrop-filter: blur(6px);
+          z-index: 2;
         }
 
         .cal-loading__spinner {
@@ -589,11 +414,42 @@ export default function CalendarPage() {
           animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        .cal-empty {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+          z-index: 1;
+          pointer-events: none;
         }
 
-        /* Legend */
+        .cal-empty__content {
+          max-width: 360px;
+          text-align: center;
+          background: rgba(2, 6, 23, 0.7);
+          border: 1px solid var(--border-subtle);
+          border-radius: 1rem;
+          padding: 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          pointer-events: auto;
+        }
+
+        .cal-empty__content h2 {
+          margin: 0;
+          font-size: 1.25rem;
+          color: var(--text-primary);
+        }
+
+        .cal-empty__content p {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+        }
+
         .cal-legend {
           display: flex;
           gap: 1.5rem;
@@ -615,198 +471,23 @@ export default function CalendarPage() {
           border-radius: 50%;
         }
 
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
         @media (max-width: 768px) {
           .cal-header {
             flex-direction: column;
             align-items: flex-start;
           }
-
-          .cal-grid {
-            overflow-x: auto;
-          }
-
-          .cal-day {
-            min-width: 120px;
-          }
         }
       `}</style>
     </div>
   );
 }
 
-// Month View Component
-function MonthView({ 
-  currentDate, 
-  reservations, 
-  onSelectReservation,
-  onSelectDay,
-}: { 
-  currentDate: Date;
-  reservations: Reservation[];
-  onSelectReservation: (r: Reservation) => void;
-  onSelectDay: (day: Date) => void;
-}) {
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 1 });
-
-  const getReservationsForDay = (day: Date) => {
-    return reservations.filter((res) => isSameDay(parseISO(res.startAt), day));
-  };
-
-  return (
-    <div className="month-grid">
-      <div className="month-header">
-        {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => (
-          <div key={day} className="month-header__cell">{day}</div>
-        ))}
-      </div>
-      {weeks.map((weekStart) => {
-        const weekDays = eachDayOfInterval({ 
-          start: weekStart, 
-          end: addDays(weekStart, 6) 
-        });
-        return (
-          <div key={weekStart.toISOString()} className="month-row">
-            {weekDays.map((day) => {
-              const dayReservations = getReservationsForDay(day);
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const isToday = isSameDay(day, new Date());
-              
-              return (
-                <button
-                  key={day.toISOString()}
-                  className={`month-cell ${!isCurrentMonth ? "other-month" : ""} ${isToday ? "is-today" : ""}`}
-                  onClick={() => onSelectDay(day)}
-                >
-                  <span className="month-cell__number">{format(day, "d")}</span>
-                  {dayReservations.length > 0 && (
-                    <div className="month-cell__events">
-                      {dayReservations.slice(0, 3).map((res) => (
-                        <div
-                          key={res.id}
-                          className="month-event"
-                          style={{ backgroundColor: statusConfig[res.status]?.color }}
-                          onClick={(e) => { e.stopPropagation(); onSelectReservation(res); }}
-                        />
-                      ))}
-                      {dayReservations.length > 3 && (
-                        <span className="month-cell__more">+{dayReservations.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        );
-      })}
-
-      <style jsx>{`
-        .month-grid {
-          background: var(--surface-base);
-          border: 1px solid var(--border-subtle);
-          border-radius: 1rem;
-          overflow: hidden;
-        }
-
-        .month-header {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .month-header__cell {
-          padding: 1rem;
-          text-align: center;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
-        }
-
-        .month-row {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-        }
-
-        .month-row:not(:last-child) {
-          border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .month-cell {
-          min-height: 100px;
-          padding: 0.5rem;
-          border: none;
-          border-right: 1px solid var(--border-subtle);
-          background: var(--surface-base);
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .month-cell:last-child {
-          border-right: none;
-        }
-
-        .month-cell:hover {
-          background: var(--surface-elevated);
-        }
-
-        .month-cell.other-month {
-          background: var(--surface-elevated);
-          opacity: 0.5;
-        }
-
-        .month-cell__number {
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: var(--text-primary);
-        }
-
-        .month-cell.is-today .month-cell__number {
-          background: var(--accent-primary);
-          color: white;
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .month-cell__events {
-          display: flex;
-          gap: 4px;
-          flex-wrap: wrap;
-          margin-top: 0.5rem;
-        }
-
-        .month-event {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-
-        .month-event:hover {
-          transform: scale(1.3);
-        }
-
-        .month-cell__more {
-          font-size: 0.7rem;
-          color: var(--text-muted);
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// New Reservation Modal
 function NewReservationModal({
   slot,
   therapists,
@@ -886,9 +567,7 @@ function NewReservationModal({
 
         <div className="modal-header">
           <h2>Nueva Reservación</h2>
-          <p className="modal-date">
-            {format(startAt, "EEEE d 'de' MMMM, HH:mm", { locale: es })}
-          </p>
+          <p className="modal-date">{format(startAt, "EEEE d 'de' MMMM, HH:mm", { locale: es })}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form-content">
@@ -896,41 +575,36 @@ function NewReservationModal({
 
           <div className="form-group">
             <label>Servicio *</label>
-            <select
-              value={formData.serviceId}
-              onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
-              required
-            >
+            <select value={formData.serviceId} onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })} required>
               <option value="">Seleccionar servicio</option>
               {services.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
             <label>Sucursal *</label>
-            <select
-              value={formData.branchId}
-              onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-              required
-            >
+            <select value={formData.branchId} onChange={(e) => setFormData({ ...formData, branchId: e.target.value })} required>
               <option value="">Seleccionar sucursal</option>
               {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
             <label>Terapeuta</label>
-            <select
-              value={formData.therapistId}
-              onChange={(e) => setFormData({ ...formData, therapistId: e.target.value })}
-            >
+            <select value={formData.therapistId} onChange={(e) => setFormData({ ...formData, therapistId: e.target.value })}>
               <option value="">Sin asignar</option>
               {therapists.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </div>
@@ -1082,7 +756,6 @@ function NewReservationModal({
   );
 }
 
-// Reservation Modal
 function ReservationModal({
   reservation,
   onClose,
@@ -1109,7 +782,7 @@ function ReservationModal({
 
         <div className="modal-content">
           <h2>{reservation.service?.name || "Servicio"}</h2>
-          
+
           <div className="modal-info">
             <div className="info-row">
               <User size={18} />
@@ -1124,9 +797,7 @@ function ReservationModal({
               <Clock size={18} />
               <div>
                 <p className="info-label">Fecha y hora</p>
-                <p className="info-value">
-                  {format(parseISO(reservation.startAt), "EEEE, d 'de' MMMM", { locale: es })}
-                </p>
+                <p className="info-value">{format(parseISO(reservation.startAt), "EEEE, d 'de' MMMM", { locale: es })}</p>
                 <p className="info-sub">
                   {format(parseISO(reservation.startAt), "HH:mm")} — {format(parseISO(reservation.endAt), "HH:mm")}
                 </p>

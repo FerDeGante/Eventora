@@ -34,34 +34,58 @@
   margin-top: var(--space-1, 4px);
 }
 
-.steps {
-  display: flex;
+.pillBar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2, 8px);
   padding: var(--space-4, 16px) var(--space-6, 24px);
   border-bottom: 1px solid var(--eventora-neutral-200, #e8eaed);
-  gap: var(--space-2, 8px);
-  flex-wrap: wrap;
+  background: var(--eventora-neutral-50, #f8f9fa);
 }
 
-.step {
-  flex: 1;
-  text-align: center;
-  padding: var(--space-2, 8px);
-  border-radius: var(--radius-md, 8px);
-  font-size: var(--text-xs, 12px);
-  font-weight: 500;
-  background: var(--eventora-neutral-100, #f1f3f4);
-  color: var(--eventora-neutral-500, #9aa0a6);
+.pillButton {
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+  background: #fff;
+  border-radius: 999px;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 56px;
 }
 
-.stepActive {
-  background: rgba(26, 115, 232, 0.12);
-  color: var(--eventora-primary, #1a73e8);
+.pillButton:hover {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
 }
 
-.stepCompleted {
-  background: rgba(52, 168, 83, 0.16);
-  color: var(--eventora-success, #34a853);
+.pillButtonActive {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  box-shadow: 0 0 0 1px var(--clinic-color, var(--eventora-primary, #1a73e8));
+  background: var(--eventora-neutral-50, #f8f9fa);
+}
+
+.pillButton:focus-visible {
+  outline: 2px solid var(--clinic-color, var(--eventora-primary, #1a73e8));
+  outline-offset: 2px;
+}
+
+.pillLabel {
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  color: var(--eventora-neutral-500, #9aa0a6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pillValue {
+  font-size: var(--text-sm, 14px);
+  font-weight: 600;
+  color: var(--eventora-neutral-900, #202124);
+  text-align: left;
 }
 
 .body {
@@ -80,6 +104,20 @@
   font-weight: 600;
   color: var(--eventora-neutral-700, #5f6368);
   margin: var(--space-4, 16px) 0 var(--space-3, 12px);
+}
+
+.sectionHint {
+  font-size: var(--text-xs, 12px);
+  color: var(--eventora-neutral-500, #9aa0a6);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.coachSection {
+  margin-top: var(--space-6, 24px);
+  padding: var(--space-4, 16px);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--eventora-neutral-50, #f8f9fa);
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
 }
 
 .servicesList {
@@ -444,8 +482,8 @@
     padding: var(--space-6, 24px) var(--space-3, 12px);
   }
 
-  .steps {
-    flex-direction: column;
+  .pillBar {
+    grid-template-columns: 1fr;
   }
 
   .timeSlotsGrid {
