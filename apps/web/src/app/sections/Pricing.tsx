@@ -72,7 +72,7 @@ export function Pricing() {
             Elige el plan que <span className={styles.gradient}>multiplica tu ROI</span>
           </h2>
           <p className={styles.subtitle}>
-            Cada plan incluye todo lo necesario para recuperar tu inversión en menos de 30 días.
+            Cada plan incluye reservas de clases y sesiones con pago en minutos para recuperar tu inversión en menos de 30 días.
             <br />
             Sin contratos anuales. Cancela cuando quieras.
           </p>

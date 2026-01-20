@@ -1,0 +1,454 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--eventora-neutral-50, #f8f9fa) 0%, var(--eventora-neutral-100, #f1f3f4) 100%);
+  padding: var(--space-8, 32px) var(--space-4, 16px);
+  font-family: var(--font-sans, "Inter", -apple-system, BlinkMacSystemFont, sans-serif);
+  color: var(--eventora-neutral-900, #202124);
+}
+
+.widget {
+  max-width: 640px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: var(--shadow-lg, 0 4px 6px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+}
+
+.header {
+  background: linear-gradient(135deg, var(--clinic-color, var(--eventora-primary, #1a73e8)), var(--clinic-color-dark, var(--eventora-primary-hover, #1557b0)));
+  padding: var(--space-6, 24px);
+  color: #fff;
+}
+
+.clinicName {
+  font-size: var(--text-xl, 20px);
+  font-weight: 700;
+  margin: 0;
+}
+
+.headerSubtitle {
+  font-size: var(--text-sm, 14px);
+  opacity: 0.9;
+  margin-top: var(--space-1, 4px);
+}
+
+.steps {
+  display: flex;
+  padding: var(--space-4, 16px) var(--space-6, 24px);
+  border-bottom: 1px solid var(--eventora-neutral-200, #e8eaed);
+  gap: var(--space-2, 8px);
+  flex-wrap: wrap;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-2, 8px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-xs, 12px);
+  font-weight: 500;
+  background: var(--eventora-neutral-100, #f1f3f4);
+  color: var(--eventora-neutral-500, #9aa0a6);
+  transition: all 0.2s ease;
+}
+
+.stepActive {
+  background: rgba(26, 115, 232, 0.12);
+  color: var(--eventora-primary, #1a73e8);
+}
+
+.stepCompleted {
+  background: rgba(52, 168, 83, 0.16);
+  color: var(--eventora-success, #34a853);
+}
+
+.body {
+  padding: var(--space-6, 24px);
+}
+
+.sectionTitle {
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: var(--eventora-neutral-900, #202124);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.sectionTitleSub {
+  font-size: var(--text-sm, 14px);
+  font-weight: 600;
+  color: var(--eventora-neutral-700, #5f6368);
+  margin: var(--space-4, 16px) 0 var(--space-3, 12px);
+}
+
+.servicesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+.serviceCard {
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+  border-radius: var(--radius-lg, 12px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  text-align: left;
+}
+
+.serviceCard:hover {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.serviceCardSelected {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  box-shadow: 0 0 0 1px var(--clinic-color, var(--eventora-primary, #1a73e8));
+  background: var(--eventora-neutral-50, #f8f9fa);
+}
+
+.serviceCard:focus-visible {
+  outline: 2px solid var(--clinic-color, var(--eventora-primary, #1a73e8));
+  outline-offset: 2px;
+}
+
+.serviceName {
+  font-weight: 600;
+  color: var(--eventora-neutral-900, #202124);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.serviceDescription {
+  font-size: var(--text-xs, 12px);
+  color: var(--eventora-neutral-700, #5f6368);
+  margin: var(--space-1, 4px) 0;
+}
+
+.serviceDetails {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm, 14px);
+  color: var(--eventora-neutral-700, #5f6368);
+}
+
+.serviceDuration {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+.servicePrice {
+  font-weight: 600;
+  color: var(--eventora-success, #34a853);
+}
+
+.calendarNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.calendarNavButton {
+  background: transparent;
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+  padding: var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--eventora-neutral-700, #5f6368);
+}
+
+.calendarNavButton:focus-visible {
+  outline: 2px solid var(--eventora-primary, #1a73e8);
+  outline-offset: 2px;
+}
+
+.calendarMonth {
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: var(--eventora-neutral-900, #202124);
+  text-transform: capitalize;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1, 4px);
+  margin-bottom: var(--space-6, 24px);
+}
+
+.calendarDay {
+  text-align: center;
+  font-size: var(--text-xs, 12px);
+  color: var(--eventora-neutral-700, #5f6368);
+  font-weight: 500;
+  padding: var(--space-2, 8px);
+}
+
+.calendarEmpty {
+  min-height: 32px;
+}
+
+.calendarDate {
+  text-align: center;
+  padding: var(--space-2, 8px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: #fff;
+  color: var(--eventora-neutral-900, #202124);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.calendarDate:hover:not(:disabled) {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+}
+
+.calendarDateSelected {
+  background: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  color: #fff;
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+}
+
+.calendarDateToday {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+}
+
+.calendarDateDisabled {
+  color: var(--eventora-neutral-500, #9aa0a6);
+  background: var(--eventora-neutral-100, #f1f3f4);
+  cursor: not-allowed;
+}
+
+.calendarDate:focus-visible {
+  outline: 2px solid var(--eventora-primary, #1a73e8);
+  outline-offset: 2px;
+}
+
+.timeSlotsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2, 8px);
+}
+
+.timeSlot {
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+  border-radius: var(--radius-md, 8px);
+  text-align: center;
+  font-size: var(--text-sm, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: var(--eventora-neutral-900, #202124);
+  transition: all 0.15s ease;
+}
+
+.timeSlotSelected {
+  border-color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  color: var(--clinic-color, var(--eventora-primary, #1a73e8));
+  background: rgba(26, 115, 232, 0.08);
+}
+
+.timeSlot:disabled {
+  background: var(--eventora-neutral-100, #f1f3f4);
+  color: var(--eventora-neutral-500, #9aa0a6);
+  cursor: not-allowed;
+}
+
+.timeSlot:focus-visible {
+  outline: 2px solid var(--eventora-primary, #1a73e8);
+  outline-offset: 2px;
+}
+
+.formGroup {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.label {
+  display: block;
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  color: var(--eventora-neutral-700, #5f6368);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--eventora-neutral-200, #e8eaed);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-sm, 14px);
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  background: #fff;
+  color: var(--eventora-neutral-900, #202124);
+}
+
+.input:focus-visible,
+.textarea:focus-visible {
+  border-color: var(--eventora-primary, #1a73e8);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.footer {
+  padding: var(--space-4, 16px) var(--space-6, 24px);
+  border-top: 1px solid var(--eventora-neutral-200, #e8eaed);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+}
+
+.footerButton {
+  flex: 1 1 180px;
+}
+
+.fullWidthButton {
+  width: 100%;
+  margin-top: var(--space-4, 16px);
+}
+
+.summary {
+  background: var(--eventora-neutral-100, #f1f3f4);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4, 16px);
+  margin-bottom: var(--space-6, 24px);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm, 14px);
+  padding: var(--space-2, 8px) 0;
+  border-bottom: 1px solid var(--eventora-neutral-200, #e8eaed);
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
+}
+
+.summaryLabel {
+  color: var(--eventora-neutral-700, #5f6368);
+}
+
+.summaryValue {
+  font-weight: 500;
+  color: var(--eventora-neutral-900, #202124);
+}
+
+.summaryValueEmphasis {
+  font-weight: 600;
+  color: var(--eventora-success, #34a853);
+}
+
+.summaryValueMono {
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, monospace);
+  color: var(--eventora-neutral-900, #202124);
+}
+
+.successContainer {
+  text-align: center;
+  padding: var(--space-8, 32px) var(--space-4, 16px);
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(52, 168, 83, 0.15);
+  border-radius: var(--radius-full, 9999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4, 16px);
+  color: var(--eventora-success, #34a853);
+}
+
+.successTitle {
+  font-size: var(--text-xl, 20px);
+  font-weight: 700;
+  color: var(--eventora-neutral-900, #202124);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.successMessage {
+  color: var(--eventora-neutral-700, #5f6368);
+  margin-bottom: var(--space-6, 24px);
+  font-size: var(--text-sm, 14px);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-10, 40px) var(--space-6, 24px);
+  color: var(--eventora-neutral-700, #5f6368);
+}
+
+.errorContainer {
+  text-align: center;
+  padding: var(--space-10, 40px) var(--space-6, 24px);
+}
+
+.errorTitle {
+  font-size: var(--text-lg, 18px);
+  font-weight: 600;
+  color: var(--eventora-error, #ea4335);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.errorMessage {
+  color: var(--eventora-neutral-700, #5f6368);
+}
+
+.inlineError {
+  background: rgba(234, 67, 53, 0.1);
+  color: var(--eventora-error, #ea4335);
+  padding: var(--space-3, 12px);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: var(--space-4, 16px);
+  font-size: var(--text-sm, 14px);
+}
+
+.emptyState {
+  color: var(--eventora-neutral-700, #5f6368);
+  text-align: center;
+  font-size: var(--text-sm, 14px);
+}
+
+.poweredBy {
+  text-align: center;
+  margin-top: var(--space-6, 24px);
+  font-size: var(--text-xs, 12px);
+  color: var(--eventora-neutral-500, #9aa0a6);
+}
+
+.poweredBy strong {
+  color: var(--eventora-primary, #1a73e8);
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-6, 24px) var(--space-3, 12px);
+  }
+
+  .steps {
+    flex-direction: column;
+  }
+
+  .timeSlotsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

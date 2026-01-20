@@ -10,23 +10,23 @@ export function EventoraModules() {
   const modules = [
     {
       icon: "📅",
-      name: "Agenda que nunca duerme",
-      description: "Tus clientes reservan a las 3AM. Tú despiertas con la agenda llena y cero esfuerzo."
+      name: "Clases (capacidad N) sin fricción",
+      description: "Abre cupos, vende lugares y confirma asistencia en minutos, incluso cuando duermes."
     },
     {
       icon: "💳",
-      name: "Cobra antes de trabajar",
-      description: "98% de tus sesiones cobradas por adelantado. Adiós a perseguir pagos."
+      name: "Sesiones 1:1 con pago inmediato",
+      description: "Tus clientes reservan y pagan en el mismo flujo. Cobro asegurado en minutos."
     },
     {
       icon: "🛍️",
-      name: "Tu clínica trabaja 24/7",
-      description: "Clientes nuevos descubren tus servicios mientras tú duermes. Sin publicidad."
+      name: "Reservas 24/7 sin recepcionista",
+      description: "Agenda autoservicio para clases y sesiones sin llamadas, sin mensajes, sin estrés."
     },
     {
       icon: "📧",
-      name: "Equipo virtual que no falla",
-      description: "Confirmaciones, recordatorios y seguimiento automático. Como tener 3 recepcionistas."
+      name: "Confirmación y cobro en minutos",
+      description: "Emails y recordatorios automáticos para reducir no-shows y acelerar el time-to-cash."
     }
   ];
 
@@ -201,9 +201,9 @@ export function EventoraModules() {
           <div className={styles.contentSide}>
             <div className={styles.sectionHeader}>
               <span className={styles.badge}>EL SISTEMA COMPLETO</span>
-              <h2 className={styles.title}>Cuatro decisiones que transforman tu negocio</h2>
+              <h2 className={styles.title}>El sistema para clases y sesiones que cobran en minutos</h2>
               <p className={styles.subtitle}>
-                No vendemos software. Te entregamos el sistema exacto que usan las clínicas que facturan +$50K mensuales sin trabajar fines de semana.
+                No vendemos software. Te entregamos el sistema exacto que usan las clínicas wellness que operan clases grupales y sesiones 1:1 con cobro inmediato.
               </p>
             </div>
 

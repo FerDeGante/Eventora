@@ -83,32 +83,33 @@ export function Hero() {
         </div>
 
         <h1 className={styles.title}>
-          Recupera 15 horas semanales y <span className={styles.titleGradient}>duplica tu facturación</span>
+          Clases con cupo y sesiones 1:1 que se reservan y se pagan en{" "}
+          <span className={styles.titleGradient}>minutos</span>
         </h1>
 
         <p className={styles.description}>
-          Imagina despertar y ver que 40 clientes agendaron mientras dormías. Cero llamadas perdidas, cero dobles reservas, cero estrés.
+          Eventora es el sistema para clínicas wellness que manejan clases (capacidad N) y sesiones individuales (capacidad 1).
           <br />
-          Así trabajan las clínicas que dejaron atrás las agendas de papel.
+          Tus clientes eligen horario, pagan y reciben confirmación en minutos — sin llamadas ni cobros manuales.
         </p>
 
         <div className={styles.actions}>
           <Link href="/demo" className={styles.primaryButton}>
-            Ver demo
+            Ver demo de reservas y pagos
           </Link>
           <Link href="#caracteristicas" className={styles.secondaryButton}>
-            Conocer más
+            Ver cómo funciona
           </Link>
         </div>
 
         <div className={styles.stats}>
           <div className={styles.stat}>
-            <div className={styles.statValue}>15hrs</div>
-            <div className={styles.statLabel}>Recuperadas semanalmente</div>
+            <div className={styles.statValue}>N + 1</div>
+            <div className={styles.statLabel}>Clases grupales + sesiones 1:1</div>
           </div>
           <div className={styles.stat}>
-            <div className={styles.statValue}>3.2x</div>
-            <div className={styles.statLabel}>Facturación promedio</div>
+            <div className={styles.statValue}>5 min</div>
+            <div className={styles.statLabel}>De reserva a pago confirmado</div>
           </div>
           <div className={styles.stat}>
             <div className={styles.statValue}>48h</div>
