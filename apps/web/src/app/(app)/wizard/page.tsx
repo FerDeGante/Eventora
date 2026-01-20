@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { SectionHeading } from "@/app/components/ui/SectionHeading";
@@ -64,6 +64,14 @@ const getSlotTherapist = (slot: PublicSlot) => slot.therapist ?? slot.therapistN
 const getSlotRoom = (slot: PublicSlot) => slot.resource ?? slot.resourceName ?? "Room Eventora";
 
 export default function WizardPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Cargando...</div>}>
+      <WizardContent />
+    </Suspense>
+  );
+}
+
+function WizardContent() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [step, setStep] = useState(0);
   const [selectedBranch, setSelectedBranch] = useState<PublicBranch | null>(null);

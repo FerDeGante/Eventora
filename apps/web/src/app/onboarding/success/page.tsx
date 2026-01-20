@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
@@ -23,7 +23,7 @@ type VerifyResponse = {
   error?: string;
 };
 
-export default function OnboardingSuccessPage() {
+function OnboardingSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
@@ -209,3 +209,11 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: "none",
   },
 };
+
+export default function OnboardingSuccessPage() {
+  return (
+    <Suspense fallback={<div style={styles.container}><div style={styles.loading}>Cargando...</div></div>}>
+      <OnboardingSuccessContent />
+    </Suspense>
+  );
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
@@ -270,7 +271,7 @@ function formatTime(dateStr: string): string {
 // ============================================
 // MAIN COMPONENT
 // ============================================
-export default function CheckoutPage() {
+function CheckoutContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = params.slug as string;
@@ -674,5 +675,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Cargando...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
