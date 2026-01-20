@@ -115,8 +115,8 @@
 | T-0010 | QA e2e + observabilidad | - | DONE |
 | T-0011 | Credenciales productivas + RLS PostgreSQL | 🔴 P0 | IN_PROGRESS |
 | T-0017 | Resolver vulnerabilidades npm (1 crítica RCE) | 🔴 P0 | DONE |
-| T-0012 | Guardrails RBAC en UI + rutas protegidas | 🟡 P1 | TODO |
-| T-0013 | Instrumentación KPI en booking → checkout → check-in | 🟡 P1 | TODO |
+| T-0012 | Guardrails RBAC en UI + rutas protegidas | 🟡 P1 | DONE |
+| T-0013 | Instrumentación KPI en booking → checkout → check-in | 🟡 P1 | DONE |
 | T-0014 | Booking widget + checkout alineados a Design System | 🟡 P1 | TODO |
 | T-0015 | Copy landing: clase vs sesión + time-to-cash | 🟡 P1 | TODO |
 | T-0016 | Calendario con FullCalendar + densidad legible | 🟡 P1 | TODO |
