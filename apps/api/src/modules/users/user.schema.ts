@@ -24,6 +24,7 @@ export const updateUserInput = z.object({
 export const listUsersQuery = paginationQuery.extend({
   role: userRoleEnum.optional(),
   search: z.string().optional(),
+  hasMembership: z.enum(["true", "false"]).optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserInput>;

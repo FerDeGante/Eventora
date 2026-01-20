@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import {
   createReservationInput,
   listReservationsQuery,
@@ -13,10 +13,35 @@ import {
   updateReservationStatus,
   deleteReservation,
 } from "./reservation.service";
+import { enforceRateLimit, RateLimitError } from "../../lib/rate-limit";
+import { requireRoles } from "../../utils/rbac";
+
+// A4 FIX: Rate limit para prevenir spam de reservaciones
+const reservationRateLimitGuard = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    await enforceRateLimit(request, { 
+      keyPrefix: "reservations:create", 
+      limit: 10, 
+      windowSeconds: 60,
+      identifier: request.ip 
+    });
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return reply
+        .header("Retry-After", error.retryAfterSeconds)
+        .status(429)
+        .send({ message: "Demasiadas reservaciones. Intenta de nuevo en un momento." });
+    }
+    throw error;
+  }
+};
+
+const reservationStaffGuard = requireRoles(["ADMIN", "MANAGER", "RECEPTION", "THERAPIST"]);
 
 export async function reservationRoutes(app: FastifyInstance) {
   app.post(
     "/",
+    { preHandler: [app.authenticate, reservationRateLimitGuard, reservationStaffGuard] },
     async (request, reply) => {
       const body = createReservationInput.parse(request.body);
       try {
@@ -28,12 +53,12 @@ export async function reservationRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get("/", { preHandler: [app.authenticate] }, async (request) => {
+  app.get("/", { preHandler: [app.authenticate, reservationStaffGuard] }, async (request) => {
     const query = listReservationsQuery.parse(request.query ?? {});
     return listReservations(query);
   });
 
-  app.get("/:id", { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.get("/:id", { preHandler: [app.authenticate, reservationStaffGuard] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
       const reservation = await getReservationById(id);
@@ -46,7 +71,7 @@ export async function reservationRoutes(app: FastifyInstance) {
   app.patch(
     "/:id",
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, reservationStaffGuard],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
@@ -63,7 +88,7 @@ export async function reservationRoutes(app: FastifyInstance) {
   app.patch(
     "/:id/status",
     {
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, reservationStaffGuard],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
@@ -77,7 +102,7 @@ export async function reservationRoutes(app: FastifyInstance) {
     },
   );
 
-  app.delete("/:id", { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.delete("/:id", { preHandler: [app.authenticate, reservationStaffGuard] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
       const result = await deleteReservation(id);

@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { GlowCard } from "../../components/ui/GlowCard";
-import { EventoraButton } from "../../components/ui/EventoraButton";
-import { InputField } from "../../components/ui/InputField";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { SectionHeading } from "@/app/components/ui/SectionHeading";
+import { GlowCard } from "@/app/components/ui/GlowCard";
+import { EventoraButton } from "@/app/components/ui/EventoraButton";
+import { InputField } from "@/app/components/ui/InputField";
 import {
   getPublicAvailability,
   getPublicBranches,
@@ -14,8 +14,9 @@ import {
   type PublicBranch,
   type PublicService,
   type PublicSlot,
-} from "../../lib/public-api";
-import { useUxMetrics } from "../../hooks/useUxMetrics";
+} from "@/lib/public-api";
+import { createCheckout } from "@/lib/admin-api";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
 const fallbackWizard = {
   branches: [
@@ -138,14 +139,14 @@ export default function WizardPage() {
 
   useEffect(() => {
     if (preselectBranch && branches.length) {
-      const branch = branches.find((b) => b.id === preselectBranch);
+      const branch = branches.find((b: PublicBranch) => b.id === preselectBranch);
       if (branch) setSelectedBranch(branch);
     }
   }, [preselectBranch, branches]);
 
   useEffect(() => {
     if (preselectService && services.length) {
-      const service = services.find((s) => s.id === preselectService);
+      const service = services.find((s: PublicService) => s.id === preselectService);
       if (service) setSelectedService(service);
     }
   }, [preselectService, services]);
@@ -155,6 +156,39 @@ export default function WizardPage() {
       track("load", { slots: slots.length, branch: selectedBranch?.id, service: selectedService?.id });
     }
   }, [slots, selectedBranch?.id, selectedService?.id, track]);
+
+  // Checkout mutation
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedService || !selectedSlot) {
+        throw new Error("Selecciona servicio y horario");
+      }
+      // Note: In production, userId should come from session
+      const result = await createCheckout({
+        userId: "guest", // TODO: Get from auth session
+        mode: "reservation",
+        amount: selectedService.price ? selectedService.price * 100 : 185000, // cents
+        currency: "mxn",
+        successUrl: `${window.location.origin}/wizard?success=true`,
+        cancelUrl: `${window.location.origin}/wizard?cancelled=true`,
+        provider: "stripe",
+      });
+      return result;
+    },
+    onSuccess: (data) => {
+      track("action", { action: "checkout", provider: "stripe" });
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (err: Error) => {
+      track("error", { message: err.message });
+    },
+  });
+
+  const handleCheckout = () => {
+    checkoutMutation.mutate();
+  };
 
   const steps = [
     { title: "Sucursal", description: "Contexto del paciente y multi-clínica." },
@@ -203,7 +237,7 @@ export default function WizardPage() {
                 </p>
               )}
               <div className="wizard-options">
-                {branches.map((branch) => (
+                {branches.map((branch: PublicBranch) => (
                   <button
                     key={branch.id}
                     className={`wizard-option ${selectedBranch?.id === branch.id ? "is-active" : ""}`}
@@ -225,7 +259,7 @@ export default function WizardPage() {
                 </p>
               )}
               <div className="wizard-options">
-                {services.map((service) => (
+                {services.map((service: PublicService) => (
                   <button
                     key={service.id}
                     className={`wizard-option ${selectedService?.id === service.id ? "is-active" : ""}`}
@@ -247,7 +281,7 @@ export default function WizardPage() {
               {slotsLoading && <p className="wizard-status">Calculando disponibilidad IA...</p>}
               {slotsError && <p className="wizard-status">Mostrando horarios de referencia.</p>}
               <div className="wizard-slots">
-                {slots.map((slot) => (
+                {slots.map((slot: PublicSlot) => (
                   <button
                     key={slot.id}
                     className={`wizard-slot ${selectedSlot?.id === slot.id ? "is-active" : ""}`}
@@ -272,8 +306,16 @@ export default function WizardPage() {
                 <InputField label="Código de descuento Eventora" placeholder="BLOOM-AURA" value={coupon} onChange={(e) => setCoupon(e.target.value)} />
               </div>
               <div className="wizard-checkout__actions">
-                <EventoraButton>Confirmar y pagar</EventoraButton>
+                <EventoraButton 
+                  onClick={handleCheckout} 
+                  disabled={checkoutMutation.isPending || !selectedService || !selectedSlot}
+                >
+                  {checkoutMutation.isPending ? "Redirigiendo a Stripe..." : "Confirmar y pagar"}
+                </EventoraButton>
                 <EventoraButton variant="ghost">Guardar como borrador</EventoraButton>
+                {checkoutMutation.isError && (
+                  <p className="wizard-error">Error: {(checkoutMutation.error as Error)?.message}</p>
+                )}
               </div>
             </div>
           )}

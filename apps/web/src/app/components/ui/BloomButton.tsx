@@ -1,13 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
-import type { ButtonHTMLAttributes } from "react";
+import { motion, type HTMLMotionProps } from "framer-motion";
 
-interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface Props extends Omit<HTMLMotionProps<"button">, "onDrag" | "onDragStart" | "onDragEnd"> {
   variant?: "solid" | "ghost";
 }
 
-export function EventoraButton({ variant = "solid", children, className = "", type = "button", ...props }: Props) {
+export function BloomButton({ variant = "solid", children, className = "", type = "button", ...props }: Props) {
   const base = "bloom-button";
   const styles = variant === "solid" ? "bloom-button-solid" : "bloom-button-ghost";
 

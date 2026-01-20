@@ -160,9 +160,17 @@ model Clinic {
   // Branding & Settings
   logoUrl                  String?
   primaryColor             String?                 @default("#6366f1")
+  secondaryColor           String?                 @default("#8b5cf6")
   timezone                 String                  @default("America/Mexico_City")
   currency                 String                  @default("MXN")
   settings                 Json?
+  
+  // Contact Info
+  phone                    String?
+  email                    String?
+  address                  String?
+  website                  String?
+  description              String?
   
   // Relations
   subscription             Subscription?

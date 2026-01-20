@@ -7,6 +7,15 @@ import { toPagination } from "../../utils/pagination";
 export const listUsers = async (params: ListUsersQuery) => {
   const { clinicId } = assertTenant();
   const { skip, take } = toPagination({ page: params.page, pageSize: params.pageSize });
+  
+  // Build membership filter
+  let membershipFilter = {};
+  if (params.hasMembership === "true") {
+    membershipFilter = { memberships: { some: { status: "ACTIVE" } } };
+  } else if (params.hasMembership === "false") {
+    membershipFilter = { memberships: { none: { status: "ACTIVE" } } };
+  }
+
   return prisma.user.findMany({
     where: {
       clinicId,
@@ -19,6 +28,7 @@ export const listUsers = async (params: ListUsersQuery) => {
             ],
           }
         : {}),
+      ...membershipFilter,
     },
     select: {
       id: true,
@@ -28,6 +38,15 @@ export const listUsers = async (params: ListUsersQuery) => {
       role: true,
       status: true,
       createdAt: true,
+      memberships: {
+        where: { status: "ACTIVE" },
+        select: {
+          id: true,
+          membership: { select: { name: true } },
+          status: true,
+        },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
     skip,
@@ -133,4 +152,61 @@ export const deleteUser = async (userId: string) => {
   if (!existing) throw new Error("User not found");
   await prisma.user.delete({ where: { id: userId } });
   return { id: userId, deleted: true };
+};
+
+export const exportUsersCSV = async (params: ListUsersQuery) => {
+  const { clinicId } = assertTenant();
+  
+  // Build membership filter
+  let membershipFilter = {};
+  if (params.hasMembership === "true") {
+    membershipFilter = { memberships: { some: { status: "ACTIVE" } } };
+  } else if (params.hasMembership === "false") {
+    membershipFilter = { memberships: { none: { status: "ACTIVE" } } };
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      clinicId,
+      role: "CLIENT",
+      ...(params.search
+        ? {
+            OR: [
+              { name: { contains: params.search, mode: "insensitive" } },
+              { email: { contains: params.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+      ...membershipFilter,
+    },
+    select: {
+      email: true,
+      name: true,
+      phone: true,
+      createdAt: true,
+      memberships: {
+        where: { status: "ACTIVE" },
+        select: { membership: { select: { name: true } } },
+        take: 1,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Generate CSV
+  const headers = ["Nombre", "Email", "Teléfono", "Membresía", "Fecha Registro"];
+  const rows = users.map(u => [
+    u.name || "",
+    u.email,
+    u.phone || "",
+    u.memberships[0]?.membership.name || "Sin membresía",
+    new Date(u.createdAt).toLocaleDateString("es-MX"),
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+  ].join("\n");
+
+  return csvContent;
 };

@@ -52,6 +52,31 @@ export const listPublicClinics = async (query?: { q?: string; city?: string }) =
   }));
 };
 
+export const getPublicClinicBySlug = async (slug: string) => {
+  const clinic = await prisma.clinic.findFirst({
+    where: { slug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      description: true,
+      phone: true,
+      email: true,
+      address: true,
+      website: true,
+      timezone: true,
+      currency: true,
+      branches: {
+        select: { id: true, name: true, address: true },
+      },
+    },
+  });
+  return clinic;
+};
+
 export const listPublicBranches = async (clinicSlug?: string) => {
   const branches = await prisma.branch.findMany({
     where: {

@@ -7,6 +7,7 @@ import { assertTenant } from "../../utils/tenant";
 import { withTenantContext } from "../../lib/tenant-context";
 import type { CheckoutSessionInput, PaymentQuery, RefundInput } from "./payment.schema";
 import { enqueueTicketPrint } from "../pos/printJob.service";
+import { sendPaymentConfirmationEmail, sendBookingConfirmationEmail } from "../notifications/transactionalEmail.service";
 
 export const createCheckoutSession = async (input: CheckoutSessionInput) => {
   const { clinicId } = assertTenant();
@@ -67,7 +68,17 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
       },
     });
 
-    if (metadata.mode === "reservation" && metadata.reservationId) {
+    // Handle public booking checkout
+    if (metadata.type === "public_booking" && metadata.reservationId) {
+      await prisma.reservation.updateMany({
+        where: { id: metadata.reservationId, clinicId },
+        data: {
+          paymentStatus: "PAID",
+          status: "CONFIRMED",
+          paymentIntentId: paymentIntent.id,
+        },
+      });
+    } else if (metadata.mode === "reservation" && metadata.reservationId) {
       await prisma.reservation.updateMany({
         where: { id: metadata.reservationId, clinicId },
         data: {
@@ -99,6 +110,60 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
     }
 
     await enqueueTicketPrint(paymentIntent.id);
+
+    // Send payment confirmation and booking confirmation emails for public bookings
+    if (metadata.type === "public_booking" && metadata.reservationId) {
+      const reservation = await prisma.reservation.findUnique({
+        where: { id: metadata.reservationId },
+        include: {
+          user: true,
+          service: true,
+          branch: true,
+        },
+      });
+
+      if (reservation?.user?.email) {
+        const dateStr = reservation.startAt.toLocaleDateString("es-MX", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        const timeStr = reservation.startAt.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        // Send payment confirmation
+        await sendPaymentConfirmationEmail(
+          clinicId,
+          reservation.user.email,
+          reservation.user.id,
+          {
+            name: reservation.user.name || "Cliente",
+            amount: (amountTotal / 100).toFixed(2),
+            currency: currency,
+            description: reservation.service?.name || "Reservación",
+            paymentId: providerRef,
+            date: new Date().toLocaleDateString("es-MX"),
+          }
+        );
+
+        // Send booking confirmation
+        await sendBookingConfirmationEmail(
+          clinicId,
+          reservation.user.email,
+          reservation.user.id,
+          {
+            name: reservation.user.name || "Cliente",
+            service: reservation.service?.name || "Servicio",
+            date: dateStr,
+            time: timeStr,
+            branch: reservation.branch?.name || "",
+          }
+        );
+      }
+    }
   });
 };
 

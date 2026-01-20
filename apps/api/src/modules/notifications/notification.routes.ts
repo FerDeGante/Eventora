@@ -2,11 +2,14 @@ import type { FastifyInstance } from "fastify";
 import { sendEmailInput, notificationQuerySchema } from "./notification.schema";
 import { sendTransactionalEmail, listNotifications } from "./notification.service";
 import { processDueNotifications } from "./notificationScheduler.service";
+import { requireRoles } from "../../utils/rbac";
+
+const notificationAdminGuard = requireRoles(["ADMIN", "MANAGER"]);
 
 export async function notificationRoutes(app: FastifyInstance) {
   app.get(
     "/",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, notificationAdminGuard] },
     async (request, reply) => {
       const query = notificationQuerySchema.parse(request.query ?? {});
       try {
@@ -20,6 +23,7 @@ export async function notificationRoutes(app: FastifyInstance) {
 
   app.post(
     "/email",
+    { preHandler: [app.authenticate, notificationAdminGuard] },
     async (request, reply) => {
       const body = sendEmailInput.parse(request.body);
       try {
@@ -33,7 +37,7 @@ export async function notificationRoutes(app: FastifyInstance) {
 
   app.post(
     "/process-due",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, notificationAdminGuard] },
     async () => {
       return processDueNotifications();
     },

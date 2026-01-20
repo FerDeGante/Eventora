@@ -3,7 +3,6 @@ import { paginationQuery } from "../../utils/pagination";
 
 export const createReservationInput = z.object({
   serviceId: z.string().min(1),
-  userId: z.string().min(1),
   branchId: z.string().min(1),
   startAt: z.coerce.date(),
   durationMinutes: z.number().int().positive().max(600).optional(),
@@ -11,6 +10,14 @@ export const createReservationInput = z.object({
   resourceId: z.string().optional(),
   userPackageId: z.string().optional(),
   notes: z.string().max(500).optional(),
+  // Existing user
+  userId: z.string().optional(),
+  // Or quick create with client info
+  clientName: z.string().optional(),
+  clientEmail: z.string().email().optional(),
+  clientPhone: z.string().optional(),
+}).refine(data => data.userId || (data.clientName && data.clientEmail), {
+  message: "Either userId or (clientName + clientEmail) must be provided",
 });
 
 export const listReservationsQuery = paginationQuery.extend({

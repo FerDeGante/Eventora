@@ -9,7 +9,7 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1, "STRIPE_WEBHOOK_SECRET is required"),
   APP_BASE_URL: z.string().url().optional(),
   APP_URL: z.string().url().optional(),
-  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1, "MERCADOPAGO_ACCESS_TOKEN is required"),
+  MERCADOPAGO_ACCESS_TOKEN: z.string().optional(),
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   GOOGLE_CLIENT_ID: z.string().optional(),

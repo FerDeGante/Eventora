@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../lib/env';
 import { SignupInput, SelectPlanInput } from './onboarding.schema';
+import { sendWorkspaceWelcomeEmail } from '../notifications/transactionalEmail.service';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
@@ -200,6 +201,82 @@ export async function createWorkspaceWithCheckout(input: SignupInput) {
 }
 
 // ============================================
+// SESSION VERIFICATION
+// ============================================
+
+export async function verifyCheckoutSession(sessionId: string) {
+  // Retrieve Stripe session
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  
+  if (!session) {
+    throw new Error('Session not found');
+  }
+
+  const clinicId = session.metadata?.clinicId;
+  const userId = session.metadata?.userId;
+
+  if (!clinicId || !userId) {
+    throw new Error('Invalid session metadata');
+  }
+
+  // Verify payment status
+  if (session.payment_status !== 'paid' && session.status !== 'complete') {
+    // Check if it's a trial (no payment required yet)
+    const subscription = session.subscription 
+      ? await stripe.subscriptions.retrieve(session.subscription as string)
+      : null;
+    
+    if (!subscription || subscription.status !== 'trialing') {
+      throw new Error('Payment not completed');
+    }
+  }
+
+  // Get user and clinic
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, name: true, role: true, clinicId: true },
+  });
+
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    select: { id: true, name: true, slug: true },
+  });
+
+  if (!user || !clinic) {
+    throw new Error('User or workspace not found');
+  }
+
+  // Generate JWT
+  const jwt = await import('jsonwebtoken');
+  const accessToken = jwt.default.sign(
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      clinicId: user.clinicId,
+    },
+    env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    success: true,
+    accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    workspace: {
+      id: clinic.id,
+      name: clinic.name,
+      slug: clinic.slug,
+    },
+  };
+}
+
+// ============================================
 // WEBHOOK HANDLERS
 // ============================================
 
@@ -227,6 +304,21 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
+
+  // Enviar email de bienvenida al owner
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    include: { ownerUser: true },
+  });
+
+  if (clinic?.ownerUser?.email) {
+    await sendWorkspaceWelcomeEmail(clinicId, clinic.ownerUser.email, {
+      name: clinic.ownerUser.name || 'Usuario',
+      workspaceName: clinic.name,
+      slug: clinic.slug,
+      trialDays: 14,
+    });
+  }
 }
 
 export async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {

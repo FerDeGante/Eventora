@@ -226,7 +226,7 @@ export function HeroScene() {
                   </li>
                 ))}
               </ul>
-              <EventoraButton variant={pkg.highlight ? "solid" : "ghost"} onClick={() => router.push(pkg.price === "Custom" ? "/contact" : "/register")}>
+              <EventoraButton variant={pkg.highlight ? "primary" : "ghost"} onClick={() => router.push(pkg.price === "Custom" ? "/contact" : "/register")}>
                 {pkg.price === "Custom" ? "Contactar ventas" : "Empezar ahora"}
               </EventoraButton>
             </GlowCard>

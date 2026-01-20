@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-type AuthUser = { email?: string; name?: string; role?: string };
+type AuthUser = { email?: string; name?: string; role?: string; clinicId?: string };
 
 type AuthContextValue = {
   token: string | null;
@@ -13,6 +13,19 @@ type AuthContextValue = {
 };
 
 const STORAGE_KEY = "eventora-auth";
+const COOKIE_NAME = "eventora-auth-token";
+const COOKIE_MAX_AGE = 60 * 60; // 1 hour (matches JWT expiry)
+
+// Cookie helpers
+const setCookie = (name: string, value: string, maxAge: number) => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+};
+
+const deleteCookie = (name: string) => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; path=/; max-age=0`;
+};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -30,6 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (parsed.token) {
           setToken(parsed.token);
           setUser(parsed.user ?? null);
+          // Sync token to cookie for middleware access
+          setCookie(COOKIE_NAME, parsed.token, COOKIE_MAX_AGE);
         }
       } catch {
         // ignore
@@ -46,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         STORAGE_KEY,
         JSON.stringify({ token: newToken, user: newUser ?? null }),
       );
+      // Also set cookie for middleware
+      setCookie(COOKIE_NAME, newToken, COOKIE_MAX_AGE);
     }
   };
 
@@ -54,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(STORAGE_KEY);
+      deleteCookie(COOKIE_NAME);
     }
   };
 

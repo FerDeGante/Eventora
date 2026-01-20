@@ -1,6 +1,70 @@
 import { prisma } from "../../lib/prisma";
 import { assertTenant } from "../../utils/tenant";
 
+// ============ SERVICE CATEGORIES ============
+
+export const listServiceCategories = async () => {
+  const { clinicId } = assertTenant();
+  return prisma.serviceCategory.findMany({
+    where: { clinicId },
+    orderBy: { sortOrder: "asc" },
+    select: {
+      id: true,
+      name: true,
+      colorHex: true,
+      sortOrder: true,
+    },
+  });
+};
+
+export const createServiceCategory = async (input: {
+  name: string;
+  colorHex?: string;
+  sortOrder?: number;
+}) => {
+  const { clinicId } = assertTenant();
+  return prisma.serviceCategory.create({
+    data: {
+      clinicId,
+      name: input.name,
+      colorHex: input.colorHex || "#6366f1",
+      sortOrder: input.sortOrder ?? 0,
+    },
+  });
+};
+
+export const updateServiceCategory = async (id: string, input: Partial<{
+  name: string;
+  colorHex: string;
+  sortOrder: number;
+}>) => {
+  const { clinicId } = assertTenant();
+  const existing = await prisma.serviceCategory.findFirst({ where: { id, clinicId } });
+  if (!existing) throw new Error("Category not found");
+
+  return prisma.serviceCategory.update({
+    where: { id },
+    data: input,
+  });
+};
+
+export const deleteServiceCategory = async (id: string) => {
+  const { clinicId } = assertTenant();
+  const existing = await prisma.serviceCategory.findFirst({ where: { id, clinicId } });
+  if (!existing) throw new Error("Category not found");
+
+  // Check if any services use this category
+  const servicesCount = await prisma.service.count({ where: { categoryId: id } });
+  if (servicesCount > 0) {
+    throw new Error("Cannot delete category with assigned services");
+  }
+
+  await prisma.serviceCategory.delete({ where: { id } });
+  return { success: true };
+};
+
+// ============ SERVICES ============
+
 export const listServices = async () => {
   const { clinicId } = assertTenant();
   return prisma.service.findMany({

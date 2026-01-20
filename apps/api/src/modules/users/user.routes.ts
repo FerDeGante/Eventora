@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createUserInput, listUsersQuery, updateUserInput } from "./user.schema";
-import { createUser, deleteUser, listUsers, updateUser } from "./user.service";
+import { createUser, deleteUser, listUsers, updateUser, exportUsersCSV } from "./user.service";
 
 export async function userRoutes(app: FastifyInstance) {
   app.get("/", { preHandler: [app.authenticate] }, async (request) => {
@@ -8,8 +8,10 @@ export async function userRoutes(app: FastifyInstance) {
     return listUsers(query);
   });
 
+  // A2 FIX: Proteger creación de usuarios con autenticación
   app.post(
     "/",
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       const body = createUserInput.parse(request.body);
       try {
@@ -43,6 +45,19 @@ export async function userRoutes(app: FastifyInstance) {
     try {
       const result = await deleteUser(id);
       return reply.send(result);
+    } catch (error: any) {
+      return reply.code(400).send({ message: error.message });
+    }
+  });
+
+  // Export clients to CSV
+  app.get("/export/csv", { preHandler: [app.authenticate] }, async (request, reply) => {
+    const query = listUsersQuery.parse(request.query ?? {});
+    try {
+      const csv = await exportUsersCSV(query);
+      reply.header("Content-Type", "text/csv; charset=utf-8");
+      reply.header("Content-Disposition", "attachment; filename=clientes.csv");
+      return reply.send(csv);
     } catch (error: any) {
       return reply.code(400).send({ message: error.message });
     }

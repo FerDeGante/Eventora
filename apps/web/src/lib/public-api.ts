@@ -20,7 +20,6 @@ export type PublicService = {
   currency?: string;
   priceDisplay?: string;
   category?: string;
-  durationMinutes?: number;
 };
 
 export type PublicSlot = {

@@ -9,11 +9,14 @@ import {
   getPaymentById,
   refundPayment
 } from "./payment.service";
+import { requireRoles } from "../../utils/rbac";
+
+const billingRolesGuard = requireRoles(["ADMIN", "MANAGER", "RECEPTION"]);
 
 export async function paymentRoutes(app: FastifyInstance) {
   app.get(
     "/",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, billingRolesGuard] },
     async (request, reply) => {
       const query = paymentQuerySchema.parse(request.query ?? {});
       try {
@@ -27,7 +30,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app.get(
     "/:id",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, billingRolesGuard] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       try {
@@ -41,7 +44,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app.post(
     "/:id/refund",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, billingRolesGuard] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = refundInputSchema.parse(request.body ?? {});
@@ -56,6 +59,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app.post(
     "/checkout",
+    { preHandler: [app.authenticate, billingRolesGuard] },
     async (request, reply) => {
       const body = checkoutSessionInput.parse(request.body);
       try {
@@ -77,6 +81,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app.post(
     "/mercadopago",
+    { preHandler: [app.authenticate, billingRolesGuard] },
     async (request, reply) => {
       const body = checkoutSessionInput.parse(request.body);
       try {

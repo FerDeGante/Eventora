@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { GlowCard } from "../../components/ui/GlowCard";
-import { getPublicClinics, type PublicClinic } from "../../lib/public-api";
+import { SectionHeading } from "@/app/components/ui/SectionHeading";
+import { GlowCard } from "@/app/components/ui/GlowCard";
+import { getPublicClinics, type PublicClinic } from "@/lib/public-api";
 
 const fallbackClinics: PublicClinic[] = [
   { id: "clinic_cdmx", slug: "eventora-cdmx", name: "Eventora Polanco", city: "CDMX", featuredService: "Hidroterapia Eventora", branches: 3 },

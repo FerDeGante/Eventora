@@ -10,10 +10,14 @@ import { useEffect } from "react";
 
 const navItems = [
   { label: "Panel", href: "/dashboard" },
+  { label: "Clientes", href: "/clients" },
+  { label: "Calendario", href: "/calendar" },
+  { label: "Reportes", href: "/reports" },
   { label: "Wizard de reserva", href: "/wizard" },
   { label: "Notificaciones", href: "/notifications" },
   { label: "POS", href: "/pos" },
   { label: "Marketplace", href: "/marketplace" },
+  { label: "Configuración", href: "/settings" },
 ];
 
 export function AppChrome({ children }: { children: ReactNode }) {

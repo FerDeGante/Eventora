@@ -13,15 +13,18 @@ const parseAllowedOrigins = (value?: string): string[] | true => {
 };
 
 export default fp(async (app) => {
-  // Helmet temporarily disabled due to version mismatch
-  // await app.register(helmet, {
-  //   contentSecurityPolicy: false,
-  //   crossOriginEmbedderPolicy: false,
-  // });
+  // Security headers with Helmet
+  await app.register(helmet, {
+    contentSecurityPolicy: env.NODE_ENV === "production" ? undefined : false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
 
-  // CORS temporarily disabled due to version mismatch  
-  // await app.register(cors, {
-  //   origin: parseAllowedOrigins(env.CORS_ALLOWED_ORIGINS),
-  //   credentials: true,
-  // });
+  // CORS configuration
+  await app.register(cors, {
+    origin: parseAllowedOrigins(env.CORS_ALLOWED_ORIGINS),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Clinic-Id", "X-User-Id", "X-User-Roles"],
+  });
 });

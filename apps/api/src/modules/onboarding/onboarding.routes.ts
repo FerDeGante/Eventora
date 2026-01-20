@@ -44,6 +44,20 @@ const onboardingRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: error.message });
     }
   });
+
+  // Verify Stripe checkout session and create JWT
+  fastify.post('/verify-session', async (request, reply) => {
+    const { sessionId } = request.body as { sessionId: string };
+    if (!sessionId) {
+      return reply.status(400).send({ success: false, error: 'Session ID is required' });
+    }
+    try {
+      const result = await onboardingService.verifyCheckoutSession(sessionId);
+      return reply.send(result);
+    } catch (error: any) {
+      return reply.status(400).send({ success: false, error: error.message });
+    }
+  });
 };
 
 export default onboardingRoutes;

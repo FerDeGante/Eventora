@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { GlowCard } from "../../components/ui/GlowCard";
-import { EventoraButton } from "../../components/ui/EventoraButton";
+import { SectionHeading } from "@/app/components/ui/SectionHeading";
+import { GlowCard } from "@/app/components/ui/GlowCard";
+import { EventoraButton } from "@/app/components/ui/EventoraButton";
 import {
   closePosShift,
   getPosTickets,
   triggerPosDemoPrint,
   triggerPosPrint,
   type DashboardPosTicket,
-} from "../../lib/admin-api";
-import { useUxMetrics } from "../../hooks/useUxMetrics";
+} from "@/lib/admin-api";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
 const fallbackPrinters: DashboardPosTicket[] = [
   { id: "POS-1029", branch: "Eventora Polanco", status: "Impresora térmica lista", total: "Ticket #567 · hace 2m" },
@@ -22,13 +22,13 @@ const fallbackPrinters: DashboardPosTicket[] = [
 export default function PosPage() {
   const queryClient = useQueryClient();
   const track = useUxMetrics("pos");
-  const { data = [], isLoading, isError } = useQuery({
+  const { data = [], isLoading, isError } = useQuery<DashboardPosTicket[]>({
     queryKey: ["pos-tickets"],
     queryFn: getPosTickets,
     staleTime: 30 * 1000,
     retry: 1,
   });
-  const printers = data.length ? data : fallbackPrinters;
+  const printers: DashboardPosTicket[] = data.length ? data : fallbackPrinters;
   const [feedback, setFeedback] = useState<string | null>(null);
   const [currentBranch, setCurrentBranch] = useState(printers[0]?.branchId ?? printers[0]?.branch ?? "Eventora Polanco");
   const currentBranchLabel = useMemo(
@@ -115,9 +115,9 @@ export default function PosPage() {
                     variant="ghost"
                     className="pos-ticket-button"
                     onClick={() => ticketMutation.mutate(printer.id)}
-                    disabled={ticketMutation.isLoading}
+                    disabled={ticketMutation.isPending}
                   >
-                    {ticketMutation.isLoading ? "Enviando..." : "Reimprimir"}
+                    {ticketMutation.isPending ? "Enviando..." : "Reimprimir"}
                   </EventoraButton>
                 </div>
               </li>
@@ -127,11 +127,11 @@ export default function PosPage() {
         <GlowCard>
           <p className="pos-title">Comandos rápidos</p>
           <div className="pos-actions">
-            <EventoraButton onClick={() => demoMutation.mutate(undefined)} disabled={demoMutation.isLoading}>
-              {demoMutation.isLoading ? "Enviando..." : "Imprimir ticket demo"}
+            <EventoraButton onClick={() => demoMutation.mutate(undefined)} disabled={demoMutation.isPending}>
+              {demoMutation.isPending ? "Enviando..." : "Imprimir ticket demo"}
             </EventoraButton>
-            <EventoraButton variant="ghost" onClick={() => closeShiftMutation.mutate()} disabled={closeShiftMutation.isLoading}>
-              {closeShiftMutation.isLoading ? "Cerrando..." : `Cerrar turno ${currentBranchLabel}`}
+            <EventoraButton variant="ghost" onClick={() => closeShiftMutation.mutate()} disabled={closeShiftMutation.isPending}>
+              {closeShiftMutation.isPending ? "Cerrando..." : `Cerrar turno ${currentBranchLabel}`}
             </EventoraButton>
             <EventoraButton variant="ghost" onClick={() => setFeedback("Resumen enviado por correo.")}>
               Enviar resumen al correo

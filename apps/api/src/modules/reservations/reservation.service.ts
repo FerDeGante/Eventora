@@ -12,15 +12,38 @@ import { scheduleReservationReminders, notifyAdminsOfReservation } from "../noti
 export const createReservation = async (input: CreateReservationInput) => {
   const { clinicId } = assertTenant();
 
-  const [service, branch, user] = await Promise.all([
+  const [service, branch] = await Promise.all([
     prisma.service.findFirst({ where: { id: input.serviceId, clinicId } }),
     prisma.branch.findFirst({ where: { id: input.branchId, clinicId } }),
-    prisma.user.findFirst({ where: { id: input.userId, clinicId } }),
   ]);
 
   if (!service) throw new Error("Service not found");
   if (!branch) throw new Error("Branch not found");
-  if (!user) throw new Error("User not found");
+
+  // Resolve or create user
+  let userId: string;
+  if (input.userId) {
+    const user = await prisma.user.findFirst({ where: { id: input.userId, clinicId } });
+    if (!user) throw new Error("User not found");
+    userId = user.id;
+  } else if (input.clientEmail && input.clientName) {
+    // Find or create user by email
+    let user = await prisma.user.findFirst({ where: { email: input.clientEmail, clinicId } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          clinicId,
+          email: input.clientEmail,
+          name: input.clientName,
+          phone: input.clientPhone || null,
+          role: "CLIENT",
+        },
+      });
+    }
+    userId = user.id;
+  } else {
+    throw new Error("Either userId or (clientName + clientEmail) must be provided");
+  }
 
   const duration = input.durationMinutes ?? service.defaultDuration;
   const startAt = input.startAt;
@@ -51,7 +74,7 @@ export const createReservation = async (input: CreateReservationInput) => {
 
   const userPackage = input.userPackageId
     ? await prisma.userPackage.findFirst({
-        where: { id: input.userPackageId, clinicId, userId: input.userId },
+        where: { id: input.userPackageId, clinicId, userId },
       })
     : null;
 
@@ -72,7 +95,7 @@ export const createReservation = async (input: CreateReservationInput) => {
         clinicId,
         branchId: input.branchId,
         serviceId: input.serviceId,
-        userId: input.userId,
+        userId,
         therapistId: input.therapistId,
         resourceId: input.resourceId,
         packageId: userPackage?.packageId,

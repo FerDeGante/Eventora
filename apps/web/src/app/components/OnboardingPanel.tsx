@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { GlowCard } from "./ui/GlowCard";
 import { InputField } from "./ui/InputField";
 import { EventoraButton } from "./ui/EventoraButton";
-import { createClinic, inviteStaff, type InviteStaffPayload } from "../lib/admin-api";
-import { getPublicBranches, type PublicBranch } from "../lib/public-api";
+import { createClinic, inviteStaff, type InviteStaffPayload } from "@/lib/admin-api";
+import { getPublicBranches, type PublicBranch } from "@/lib/public-api";
 
 const roles: InviteStaffPayload["role"][] = ["ADMIN", "MANAGER", "RECEPTION", "THERAPIST"];
 
@@ -21,9 +21,9 @@ export function OnboardingPanel() {
   const [toast, setToast] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const branchesQuery = useQuery({
+  const branchesQuery = useQuery<PublicBranch[]>({
     queryKey: ["onboarding-branches"],
-    queryFn: getPublicBranches,
+    queryFn: () => getPublicBranches(),
     staleTime: 5 * 60 * 1000,
   });
   const branches: PublicBranch[] = useMemo(
@@ -55,8 +55,8 @@ export function OnboardingPanel() {
           <InputField label="Slug" value={clinic.slug} onChange={(e) => setClinic((s) => ({ ...s, slug: e.target.value }))} />
           <InputField label="Correo owner (opcional)" type="email" value={clinic.email} onChange={(e) => setClinic((s) => ({ ...s, email: e.target.value }))} />
         </div>
-        <EventoraButton onClick={() => clinicMutation.mutate()} disabled={clinicMutation.isLoading}>
-          {clinicMutation.isLoading ? "Creando..." : "Crear/actualizar clínica"}
+        <EventoraButton onClick={() => clinicMutation.mutate()} disabled={clinicMutation.isPending}>
+          {clinicMutation.isPending ? "Creando..." : "Crear/actualizar clínica"}
         </EventoraButton>
       </GlowCard>
 
@@ -87,8 +87,8 @@ export function OnboardingPanel() {
             </select>
           </label>
         </div>
-        <EventoraButton onClick={() => inviteMutation.mutate()} disabled={inviteMutation.isLoading}>
-          {inviteMutation.isLoading ? "Enviando..." : "Invitar staff"}
+        <EventoraButton onClick={() => inviteMutation.mutate()} disabled={inviteMutation.isPending}>
+          {inviteMutation.isPending ? "Enviando..." : "Invitar staff"}
         </EventoraButton>
       </GlowCard>
 

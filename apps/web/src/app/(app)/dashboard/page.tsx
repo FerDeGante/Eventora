@@ -1,8 +1,8 @@
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { GlowCard } from "../../components/ui/GlowCard";
-import { KpiBar } from "../../components/ui/KpiBar";
-import { getDashboardOverview, getPosTickets, type DashboardOverviewResponse } from "../../lib/admin-api";
-import { OnboardingPanel } from "../../components/OnboardingPanel";
+import { SectionHeading } from "@/app/components/ui/SectionHeading";
+import { GlowCard } from "@/app/components/ui/GlowCard";
+import { KpiBar } from "@/app/components/ui/KpiBar";
+import { getDashboardOverview, getPosTickets, type DashboardOverviewResponse } from "@/lib/admin-api";
+import { OnboardingPanel } from "@/app/components/OnboardingPanel";
 
 const fallbackData: DashboardOverviewResponse = {
   stats: [

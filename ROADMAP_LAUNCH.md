@@ -48,106 +48,107 @@
 
 ## 📋 TAREAS ABCDE - PENDIENTES
 
-### 🔴 A - CRÍTICAS (Sin esto NO hay lanzamiento)
+### 🔴 A - CRÍTICAS (Sin esto NO hay lanzamiento) - ✅ COMPLETADO
 
-#### A1: Landing Page con Pricing (4h) - D2
+#### A1: Landing Page con Pricing (4h) - D2 ✅
 ```
 /apps/web/src/app/(marketing)/page.tsx
 /apps/web/src/app/(marketing)/pricing/page.tsx
 ```
-- [ ] Hero section con propuesta de valor
-- [ ] Features grid (reservas, pagos, membresías, reportes)
-- [ ] Tabla de precios (3 planes)
-- [ ] CTA "Comenzar 14 días gratis"
-- [ ] Footer con links legales
+- [x] Hero section con propuesta de valor
+- [x] Features grid (reservas, pagos, membresías, reportes)
+- [x] Tabla de precios (3 planes)
+- [x] CTA "Comenzar 14 días gratis"
+- [x] Footer con links legales
 
-#### A2: Signup + Checkout Flow (6h) - D2
+#### A2: Signup + Checkout Flow (6h) - D2 ✅
 ```
 /apps/web/src/app/(auth)/signup/page.tsx
 /apps/web/src/components/onboarding/SignupWizard.tsx
 ```
-- [ ] Formulario: nombre, email, password, nombre workspace
-- [ ] Validación de slug disponible
-- [ ] Selección de plan
-- [ ] Redirect a Stripe Checkout
-- [ ] Página success/cancelled
+- [x] Formulario: nombre, email, password, nombre workspace
+- [x] Validación de slug disponible
+- [x] Selección de plan
+- [x] Redirect a Stripe Checkout
+- [x] Página success/cancelled
 
-#### A3: Onboarding Success (3h) - D2
+#### A3: Onboarding Success (3h) - D2 ✅
 ```
 /apps/web/src/app/onboarding/success/page.tsx
 ```
-- [ ] Verificar sesión de Stripe
-- [ ] Crear JWT y autenticar
-- [ ] Redirect a dashboard con tutorial
+- [x] Verificar sesión de Stripe
+- [x] Crear JWT y autenticar
+- [x] Redirect a dashboard con tutorial
 
-#### A4: Dashboard Principal (6h) - D3
+#### A4: Dashboard Principal (6h) - D3 ✅
 ```
-/apps/web/src/app/(dashboard)/page.tsx
-/apps/web/src/components/dashboard/StatsCards.tsx
+/apps/web/src/app/(app)/page.tsx
 ```
-- [ ] Layout con sidebar
-- [ ] Tarjetas de métricas (ingresos, reservas, clientes)
-- [ ] Gráfica de reservas/ingresos últimos 30 días
-- [ ] Lista de próximas citas
-- [ ] Acciones rápidas
+- [x] Layout con sidebar
+- [x] Tarjetas de métricas (ingresos, reservas, clientes)
+- [x] Gráfica de reservas/ingresos últimos 30 días
+- [x] Lista de próximas citas
+- [x] Acciones rápidas
 
-#### A5: CRUD Servicios (UI) (4h) - D3
+#### A5: CRUD Servicios (UI) (4h) - D3 ✅
 ```
-/apps/web/src/app/(dashboard)/services/page.tsx
-/apps/web/src/components/dashboard/ServiceForm.tsx
+/apps/web/src/app/(app)/services/page.tsx
 ```
-- [ ] Tabla de servicios
-- [ ] Modal crear/editar servicio
-- [ ] Categorías de servicios
-- [ ] Configurar duración y precio
+- [x] Tabla de servicios con búsqueda y filtros
+- [x] Modal crear/editar servicio
+- [x] Categorías de servicios con CRUD completo
+- [x] Configurar duración y precio
 
-#### A6: CRUD Membresías (UI) (4h) - D4
+#### A6: CRUD Membresías (UI) (4h) - D4 ✅
 ```
-/apps/web/src/app/(dashboard)/memberships/page.tsx
-/apps/web/src/components/dashboard/MembershipForm.tsx
+/apps/web/src/app/(app)/memberships/page.tsx
 ```
-- [ ] Lista de planes de membresía
-- [ ] Formulario con tipos: ilimitada, sesiones totales, sesiones/periodo
-- [ ] Configurar precio, ciclo de cobro, restricciones
-- [ ] Vincular con Stripe Products
+- [x] Lista de planes de membresía (cards)
+- [x] Formulario con tipos: ilimitada, sesiones totales, sesiones/periodo, tiempo
+- [x] Configurar precio, ciclo de cobro, restricciones
+- [x] Tabs All/Public/Private
 
-#### A7: Vender Membresía a Cliente (4h) - D4
+#### A7: Vender Membresía a Cliente (4h) - D4 ✅
 ```
-/apps/web/src/app/(dashboard)/clients/[id]/page.tsx
+/apps/web/src/app/(app)/memberships/subscriptions/page.tsx
 ```
-- [ ] Ver perfil del cliente
-- [ ] Asignar membresía
-- [ ] Ver membresías activas
-- [ ] Historial de check-ins
+- [x] Ver subscripciones de clientes
+- [x] Asignar membresía desde modal
+- [x] Ver membresías activas con stats
+- [x] Pausar/Reanudar/Cancelar
 
-#### A8: Stripe Connect Onboarding (UI) (3h) - D4
+#### A8: Stripe Connect Onboarding (UI) (3h) - D4 ✅
 ```
-/apps/web/src/app/(dashboard)/settings/page.tsx
+/apps/web/src/app/(app)/settings/payments/page.tsx
 ```
-- [ ] Estado de conexión con Stripe
-- [ ] Botón "Conectar Stripe"
-- [ ] Mostrar si puede recibir pagos
-- [ ] Link al dashboard de Stripe
+- [x] Estado de conexión con Stripe
+- [x] Botón "Conectar Stripe"
+- [x] Mostrar si puede recibir pagos
+- [x] Link al dashboard de Stripe
 
-#### A9: Widget de Booking (6h) - D5
+#### A9: Widget de Booking (6h) - D5 ✅
 ```
-/apps/web/src/app/embed/[workspaceSlug]/book/page.tsx
-/apps/web/src/components/embed/BookingWidget.tsx
+/apps/web/src/app/book/[slug]/page.tsx
 ```
-- [ ] Diseño responsive para iframe
-- [ ] Seleccionar servicio
-- [ ] Seleccionar fecha/hora disponible
-- [ ] Formulario cliente (nombre, email, teléfono)
-- [ ] Pago con Stripe (split automático)
-- [ ] Confirmación
+- [x] Diseño responsive standalone
+- [x] Seleccionar servicio
+- [x] Calendario con fechas y horarios disponibles
+- [x] Formulario cliente (nombre, email, teléfono, notas)
+- [x] Redirección a checkout si requiere pago
+- [x] Confirmación
 
-#### A10: Checkout del Cliente Final (4h) - D5
-- [ ] Crear PaymentIntent con split
-- [ ] Stripe Elements embedded
-- [ ] Página de confirmación
-- [ ] Email de confirmación
+#### A10: Checkout del Cliente Final (4h) - D5 ✅
+```
+/apps/web/src/app/book/[slug]/checkout/page.tsx
+/apps/api/src/modules/marketplace/public-booking.service.ts
+```
+- [x] Crear checkout session con Stripe Connect
+- [x] Split automático de comisión (3%)
+- [x] Página de checkout con detalles de reservación
+- [x] Webhook para confirmar pago y actualizar reservación
+- [x] Estados: pagado, cancelado, pendiente
 
-**Total A: 44 horas**
+**Total A: 44 horas - ✅ COMPLETADO**
 
 ---
 

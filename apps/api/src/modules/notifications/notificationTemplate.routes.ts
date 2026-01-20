@@ -6,12 +6,13 @@ import {
   updateNotificationTemplate,
 } from "./notificationTemplate.service";
 
+// A3 FIX: Todos los endpoints de templates requieren autenticación
 export async function notificationTemplateRoutes(app: FastifyInstance) {
-  app.get("/", async () => {
+  app.get("/", { preHandler: [app.authenticate] }, async () => {
     return listNotificationTemplates();
   });
 
-  app.get("/:key", async (request, reply) => {
+  app.get("/:key", { preHandler: [app.authenticate] }, async (request, reply) => {
     const { key } = request.params as { key: string };
     const template = await getNotificationTemplate(key);
     if (!template) {
@@ -22,6 +23,7 @@ export async function notificationTemplateRoutes(app: FastifyInstance) {
 
   app.put(
     "/:key",
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { key } = request.params as { key: string };
       const body = updateTemplateInput.parse(request.body ?? {});
@@ -36,6 +38,7 @@ export async function notificationTemplateRoutes(app: FastifyInstance) {
 
   app.patch(
     "/:key",
+    { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { key } = request.params as { key: string };
       const body = updateTemplateInput.parse(request.body ?? {});

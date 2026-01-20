@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { GlowCard } from "../../components/ui/GlowCard";
-import { EventoraButton } from "../../components/ui/EventoraButton";
+import { SectionHeading } from "@/app/components/ui/SectionHeading";
+import { GlowCard } from "@/app/components/ui/GlowCard";
+import { EventoraButton } from "@/app/components/ui/EventoraButton";
 import {
   getNotificationTemplates,
   updateNotificationTemplate,
   type NotificationTemplate,
-} from "../../lib/admin-api";
-import { useUxMetrics } from "../../hooks/useUxMetrics";
+} from "@/lib/admin-api";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
 const fallbackTemplates: NotificationTemplate[] = [
   {
@@ -114,14 +114,25 @@ const fallbackTemplates: NotificationTemplate[] = [
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const track = useUxMetrics("notifications");
-  const { data = fallbackTemplates, isLoading, isError } = useQuery({
+  const { data = fallbackTemplates, isLoading, isError, error } = useQuery({
     queryKey: ["notification-templates"],
     queryFn: getNotificationTemplates,
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    onError: (err) => track("error", { message: err.message }),
-    onSuccess: (payload) => track("load", { templates: payload.length }),
   });
+
+  // Track loading/error states (React Query v5 removed onError/onSuccess from useQuery)
+  useEffect(() => {
+    if (isError && error) {
+      track("error", { message: (error as Error).message });
+    }
+  }, [isError, error, track]);
+
+  useEffect(() => {
+    if (data && data.length > 0 && !isLoading) {
+      track("load", { templates: data.length });
+    }
+  }, [data, isLoading, track]);
 
   const templates = data.length ? data : fallbackTemplates;
   const [selectedId, setSelectedId] = useState(templates[0]?.id ?? fallbackTemplates[0]?.id ?? "");
@@ -129,7 +140,14 @@ export default function NotificationsPage() {
     () => templates.find((template) => template.id === selectedId) ?? templates[0],
     [templates, selectedId],
   );
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<{
+    status: "active" | "paused" | "draft";
+    schedule: string;
+    description: string;
+    subject: string;
+    html: string;
+    text: string;
+  }>({
     status: selectedTemplate?.status ?? "draft",
     schedule: selectedTemplate?.schedule ?? "",
     description: selectedTemplate?.description ?? "",
@@ -142,7 +160,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (selectedTemplate) {
       setFormState({
-        status: selectedTemplate.status,
+        status: selectedTemplate.status ?? "draft",
         schedule: selectedTemplate.schedule ?? "",
         description: selectedTemplate.description ?? "",
         subject: selectedTemplate.subject ?? "",
@@ -221,7 +239,7 @@ export default function NotificationsPage() {
             <div className="notifications-form">
               <label>
                 <span>Estado</span>
-                <select value={formState.status} onChange={(e) => setFormState((s) => ({ ...s, status: e.target.value }))}>
+                <select value={formState.status} onChange={(e) => setFormState((s) => ({ ...s, status: e.target.value as "active" | "paused" | "draft" }))}>
                   <option value="active">Activa</option>
                   <option value="paused">Pausada</option>
                   <option value="draft">Borrador</option>
@@ -295,8 +313,8 @@ export default function NotificationsPage() {
               <pre className="notifications-preview__text">{formState.text || "Agrega copy para WhatsApp/SMS"}</pre>
             </div>
             <div className="notifications-actions">
-              <EventoraButton onClick={handleSave} disabled={mutation.isLoading}>
-                {mutation.isLoading ? "Guardando..." : "Guardar cambios"}
+              <EventoraButton onClick={handleSave} disabled={mutation.isPending}>
+                {mutation.isPending ? "Guardando..." : "Guardar cambios"}
               </EventoraButton>
               <EventoraButton variant="ghost">Abrir en Resend</EventoraButton>
             </div>

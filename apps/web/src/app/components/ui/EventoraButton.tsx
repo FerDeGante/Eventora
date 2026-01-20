@@ -1,17 +1,21 @@
 "use client";
 
-interface EventoraButtonProps {
+export interface EventoraButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: "primary" | "ghost";
   className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
 }
 
 export function EventoraButton({ 
   children, 
   onClick, 
   variant = "primary",
-  className = "" 
+  className = "",
+  disabled = false,
+  type = "button"
 }: EventoraButtonProps) {
   const baseStyles = `
     inline-flex items-center justify-center
@@ -21,6 +25,7 @@ export function EventoraButton({
     transition-all duration-300 ease-out
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
     active:scale-95
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
   `;
   
   const variantStyles = variant === "primary" 
@@ -34,7 +39,9 @@ export function EventoraButton({
   
   return (
     <button 
+      type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`${baseStyles} ${variantStyles} ${className}`}
     >
       {children}
