@@ -11,6 +11,10 @@ import {
   type NotificationTemplate,
 } from "@/lib/admin-api";
 import { useUxMetrics } from "@/app/hooks/useUxMetrics";
+import { TemplateEditor } from "@/app/components/notifications/TemplateEditor";
+import { VariablePicker } from "@/app/components/notifications/VariablePicker";
+import { TemplatePreview } from "@/app/components/notifications/TemplatePreview";
+import { Mail, Send } from "react-feather";
 
 const fallbackTemplates: NotificationTemplate[] = [
   {
@@ -156,6 +160,10 @@ export default function NotificationsPage() {
     text: selectedTemplate?.text ?? "",
   });
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testSending, setTestSending] = useState(false);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -201,6 +209,24 @@ export default function NotificationsPage() {
         text: formState.text,
       },
     });
+  };
+
+  const handleInsertVariable = (variable: string) => {
+    // Insert at the end of current HTML content
+    setFormState((s) => ({ ...s, html: s.html + " " + variable }));
+  };
+
+  const handleTestSend = async () => {
+    if (!testEmail || !selectedTemplate) return;
+    
+    setTestSending(true);
+    // Simulate API call (in real implementation, call /api/v1/notifications/templates/:id/test-send)
+    setTimeout(() => {
+      setTestSending(false);
+      setShowTestModal(false);
+      setFeedback(`Email de prueba enviado a ${testEmail}`);
+      track("action", { type: "test_send", template: selectedTemplate.id });
+    }, 1500);
   };
 
   return (
@@ -265,15 +291,20 @@ export default function NotificationsPage() {
                 <span>Asunto</span>
                 <input value={formState.subject} onChange={(e) => setFormState((s) => ({ ...s, subject: e.target.value }))} />
               </label>
-              <label>
-                <span>HTML (correo)</span>
-                <textarea
-                  value={formState.html}
-                  onChange={(e) => setFormState((s) => ({ ...s, html: e.target.value }))}
-                  rows={4}
-                />
-              </label>
-              <label>
+              
+              <div style={{ display: "flex", gap: "12px", marginBottom: "8px", alignItems: "center" }}>
+                <label style={{ margin: 0, flex: 1 }}>
+                  <span>Contenido HTML (correo)</span>
+                </label>
+                <VariablePicker onInsert={handleInsertVariable} />
+              </div>
+              
+              <TemplateEditor
+                content={formState.html}
+                onChange={(html) => setFormState((s) => ({ ...s, html }))}
+              />
+              
+              <label style={{ marginTop: "16px" }}>
                 <span>Texto WhatsApp / SMS</span>
                 <textarea
                   value={formState.text}
@@ -282,6 +313,19 @@ export default function NotificationsPage() {
                 />
               </label>
             </div>
+            
+            {/* Preview section */}
+            {showPreview && (
+              <div style={{ marginTop: "24px" }}>
+                <TemplatePreview html={formState.html} />
+              </div>
+            )}
+            {/* Preview section */}
+            {showPreview && (
+              <div style={{ marginTop: "24px" }}>
+                <TemplatePreview html={formState.html} />
+              </div>
+            )}
             <div className="notifications-meta">
               <div>
                 <p>Canales</p>
@@ -316,9 +360,108 @@ export default function NotificationsPage() {
               <EventoraButton onClick={handleSave} disabled={mutation.isPending}>
                 {mutation.isPending ? "Guardando..." : "Guardar cambios"}
               </EventoraButton>
+              <EventoraButton 
+                variant="ghost" 
+                onClick={() => setShowPreview(!showPreview)}
+              >
+                <Mail size={16} />
+                {showPreview ? "Ocultar" : "Vista previa"}
+              </EventoraButton>
+              <EventoraButton 
+                variant="ghost"
+                onClick={() => setShowTestModal(true)}
+              >
+                <Send size={16} />
+                Enviar prueba
+              </EventoraButton>
               <EventoraButton variant="ghost">Abrir en Resend</EventoraButton>
             </div>
             {feedback && <p className="notifications-feedback">{feedback}</p>}
+            
+            {/* Test Send Modal */}
+            {showTestModal && (
+              <>
+                <div
+                  onClick={() => setShowTestModal(false)}
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "rgba(0, 0, 0, 0.5)",
+                    zIndex: 999,
+                  }}
+                />
+                <div
+                  style={{
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    background: "white",
+                    padding: "24px",
+                    borderRadius: "12px",
+                    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                    zIndex: 1000,
+                    minWidth: "400px",
+                    maxWidth: "90vw",
+                  }}
+                >
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600" }}>
+                    Enviar email de prueba
+                  </h3>
+                  <p style={{ margin: "0 0 16px 0", fontSize: "14px", color: "#6b7280" }}>
+                    Enviaremos una versión de prueba de esta plantilla con datos de ejemplo
+                  </p>
+                  <input
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      marginBottom: "16px",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                    <button
+                      onClick={() => setShowTestModal(false)}
+                      style={{
+                        padding: "8px 16px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        background: "white",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleTestSend}
+                      disabled={!testEmail || testSending}
+                      style={{
+                        padding: "8px 16px",
+                        border: "none",
+                        borderRadius: "6px",
+                        background: testEmail && !testSending ? "#7c3aed" : "#d1d5db",
+                        color: "white",
+                        cursor: testEmail && !testSending ? "pointer" : "not-allowed",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {testSending ? "Enviando..." : "Enviar prueba"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </GlowCard>
         )}
       </div>
