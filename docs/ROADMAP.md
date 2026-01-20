@@ -2,7 +2,7 @@
 
 > Estado actual: MVP funcional (tareas A y B completadas según AI.md)  
 > Meta: Lanzamiento operativo sábado 24 de enero 2026  
-> Última actualización: 19 enero 2026
+> Última actualización: 20 enero 2026
 
 ---
 
@@ -13,7 +13,7 @@
 | Backend API | 100% MVP | Ninguno (RBAC hardening cubierto T-0009) |
 | Base de Datos | 100% MVP | RLS defense-in-depth pendiente (T-0011) |
 | Seguridad | 100% | RBAC/tenant tests automatizados listos (T-0009) |
-| Frontend Web | 90% | QA e2e + observabilidad cubierto en API; UI sin bloqueantes |
+| Frontend Web | 85% | Guardrails RBAC UI + calendario denso pendientes (T-0012, T-0016) |
 | Integraciones | 90% | SMS/Push post-MVP |
 
 ---
@@ -94,6 +94,11 @@
 - [T-0009] Hardening RBAC y multi-tenant (tests cross-tenant, roles mínimos por ruta) — ✅
 - [T-0010] QA e2e + observabilidad (booking → pago → check-in + emails + Sentry/health) — ✅
 - [T-0011] Credenciales productivas + RLS PostgreSQL — 🔴 pendiente (ops)
+- [T-0012] Guardrails RBAC en UI + rutas protegidas — 🔴 pendiente
+- [T-0013] Instrumentación KPI en booking → checkout → check-in — 🔴 pendiente
+- [T-0014] Booking widget + checkout alineados a Design System — 🔴 pendiente
+- [T-0015] Copy landing: clase vs sesión + time-to-cash — 🔴 pendiente
+- [T-0016] Calendario con FullCalendar + densidad legible — 🔴 pendiente
 - Rotar credenciales producción: Supabase, Stripe, Resend, MercadoPago, JWT_SECRET (acción usuario, parte de T-0011)
 
 **Gate:** listo para lanzamiento con cobertura de seguridad y QA.
@@ -108,6 +113,11 @@
 | T-0009 | Hardening RBAC y multi-tenant | DONE |
 | T-0010 | QA e2e + observabilidad | DONE |
 | T-0011 | Credenciales productivas + RLS PostgreSQL | TODO |
+| T-0012 | Guardrails RBAC en UI + rutas protegidas | TODO |
+| T-0013 | Instrumentación KPI en booking → checkout → check-in | TODO |
+| T-0014 | Booking widget + checkout alineados a Design System | TODO |
+| T-0015 | Copy landing: clase vs sesión + time-to-cash | TODO |
+| T-0016 | Calendario con FullCalendar + densidad legible | TODO |
 
 ---
 
@@ -119,12 +129,17 @@
 | A1 | Credenciales producción (Stripe/Resend/MP) | T-0011 | TODO | Rotar y cargar vars |
 | A2 | JWT_SECRET producción | T-0011 | TODO | 32+ chars, diferente de dev |
 | A3 | Supabase keys/RLS policies | T-0011 | TODO | Regenerar y habilitar RLS |
+| A4 | Guardrails RBAC UI + rutas protegidas | T-0012 | TODO | Bloquea accesos indebidos |
 
 ### 🟡 B — Importantes (mejoran experiencia)
 | ID | Tarea | Ticket | Horas | Notas |
 |----|-------|--------|-------|-------|
 | B1 | RLS policies y test script | T-0011 | 2h | Defense-in-depth opcional si no se activa en A3 |
 | B2 | Mejorar onboarding de clínicas (copias/UX) | - | 3h | No bloqueante |
+| B3 | Instrumentación KPI booking/checkout/check-in | T-0013 | 3h | Medición time-to-cash/no-show |
+| B4 | Booking + checkout alineados a Design System | T-0014 | 6h | Apple-like consistente |
+| B5 | Copy landing clase/sesión + time-to-cash | T-0015 | 2h | Claridad de nicho |
+| B6 | FullCalendar + densidad legible | T-0016 | 6h | Operación más clara |
 
 ### 🟢 C — Deseables (Post-lanzamiento)
 | ID | Tarea | Horas |
