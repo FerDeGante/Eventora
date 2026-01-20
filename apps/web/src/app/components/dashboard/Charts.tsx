@@ -121,7 +121,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
               backdropFilter: 'blur(12px)',
             }}
             labelStyle={{ color: '#f8fbff', fontWeight: 600 }}
-            formatter={(value: number) => `$${value.toLocaleString()} MXN`}
+            formatter={(value: number | undefined) => value ? `$${value.toLocaleString()} MXN` : '$0 MXN'}
           />
           <Legend 
             wrapperStyle={{ fontSize: '0.875rem' }}
