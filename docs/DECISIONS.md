@@ -63,6 +63,102 @@ Implementar todas las UIs completas con:
 
 ---
 
+## 2026-01-20 — Frontend Audit & Track-B Planning
+
+**Contexto:**  
+Después de completar MVP P0 (FRONT-A1 a A8), se realizó auditoría exhaustiva del frontend para identificar funcionalidades incompletas, mock data y áreas de mejora.
+
+**Método:**
+- Grep patterns: `mock|TODO|FIXME|placeholder|fallback|hardcoded`
+- File analysis: Revisión de 15+ componentes clave
+- Classification: Crítico (🔴), Importante (🟡), Nice to Have (🟢)
+
+**Hallazgos Principales:**
+1. **3 páginas con mock data completo:**
+   - Admin Reservations Management (bloqueante)
+   - Dashboard-Improved (decisión requerida: integrar o deprecar)
+   - Waitlist UI (esperando backend model)
+
+2. **1 TODO crítico:**
+   - Wizard auth session (userId hardcoded como "guest")
+
+3. **2 áreas de mejora UX:**
+   - Notification templates (necesita rich editor)
+   - Reports page (necesita export y más métricas)
+
+4. **5 páginas production-ready:**
+   - Dashboard principal (✅)
+   - Day Sheet (✅)
+   - Services management (✅)
+   - Checkout flow (✅)
+   - Wallet/Waitlist UIs (estructuralmente listos)
+
+**Decisión:**  
+Crear Track-B de 8 tickets (FRONT-B1 a B8) distribuidos en Sprint 2 y Sprint 3:
+
+**Sprint 2 - Integraciones Críticas (19h):**
+- FRONT-B1: Admin Reservations Backend Integration (6h) 🔴
+- FRONT-B3: Stripe Connect Completion (5h) 🔴
+- FRONT-B4: Wizard Auth Fix (4h) 🔴
+- FRONT-B2: Dashboard Charts Real Data (4h) 🟡
+
+**Sprint 3 - Mejoras UX (27h):**
+- FRONT-B6: Notification Templates Editor (8h) 🟢
+- FRONT-B8: Client Self-Service Portal (8h) 🟢
+- FRONT-B5: Reports Enhancement (6h) 🟢
+- FRONT-B7: Marketplace Enhancement (5h) 🟢
+
+**Consecuencias:**
+- ✅ Roadmap realista con todos los gaps identificados
+- ✅ Priorización clara por impacto en usuario
+- ✅ Visibilidad de deuda técnica
+- ⚠️ Requiere coordinación con backend para algunos tickets
+
+**Documentos generados:**
+- FRONTEND_AUDIT_2026.md (audit completo)
+- FRONT-B1.md a FRONT-B8.md (tickets detallados)
+- ROADMAP_LAUNCH.md (actualizado con Sprint 2-3)
+
+**Lecciones aprendidas:**
+- Grep patterns son efectivos para encontrar tech debt oculta
+- Mock data comments son buenos marcadores para integración
+- Fallback patterns indican resiliencia madura (no son problema)
+- Distinguir entre "mock permanente" vs "fallback para error handling"
+
+---
+
+## 2026-01-20 — Dashboard-Improved Fate Decision (PENDING)
+
+**Contexto:**  
+Existe `/dashboard-improved` con mock data para gráficas avanzadas (reservations trends, revenue breakdown). No está claro si es:
+1. Reemplazo experimental del dashboard principal
+2. Vista alternativa complementaria
+3. Prototipo a deprecar
+
+**Estado:** ⏳ DECISION PENDING
+
+**Opciones:**
+1. **Integrar con datos reales** (FRONT-B2 - 4h)
+   - Pro: Analytics avanzados disponibles
+   - Pro: DateRangePicker útil para análisis
+   - Con: Duplicación con dashboard principal
+   
+2. **Deprecar y consolidar en dashboard principal** (1h cleanup)
+   - Pro: Single source of truth
+   - Pro: Menos mantenimiento
+   - Con: Se pierden charts avanzados (pueden moverse)
+
+3. **Mantener como "Analytics Lab"** (experimental features)
+   - Pro: Testing ground para nuevas visualizaciones
+   - Pro: No impacta dashboard principal
+   - Con: Confusión para usuarios
+
+**Recomendación:** Integrar datos reales (Opción 1) y renombrar a `/analytics` para claridad.
+
+**Próximo paso:** Revisar con equipo de producto antes de Sprint 2.
+
+---
+
 ## 2026-01-21 — Frontend RBAC Guardrails (UI + rutas)
 
 **Contexto:**  

@@ -154,13 +154,104 @@
 
 ### 🟡 B - IMPORTANTES (Mejoran experiencia, pueden esperar post-launch)
 
-#### B1: Emails Transaccionales (3h) - D6
+#### 📁 Frontend - Track B (Post-MVP Enhancements)
+**Tickets creados:** [FRONT-B1 a FRONT-B8](#tickets-frontend-track-b)
+
+#### FRONT-B1: Admin Reservations Management (6h) - Sprint 2 🔴
+```
+/apps/web/src/app/(app)/admin/reservations-management/page.tsx
+```
+- [ ] Replace mock data with real API calls
+- [ ] Connect filters to backend query params (date, status, therapist)
+- [ ] Add pagination support
+- [ ] Test with real reservation data
+**Status:** Page exists but entirely mock data
+
+#### FRONT-B2: Dashboard-Improved Charts (4h) - Sprint 2 🟡
+```
+/apps/web/src/app/(app)/dashboard-improved/page.tsx
+```
+- [ ] Connect ReservationsChart to analytics API
+- [ ] Connect RevenueChart to analytics API
+- [ ] Enable date range filtering with real data
+- [ ] Add loading states
+**Status:** Charts exist but use mock data
+
+#### FRONT-B3: Stripe Connect Onboarding Flow (5h) - Sprint 2 🔴
+```
+/apps/web/src/app/(app)/settings/payments/page.tsx
+```
+- [ ] Show comprehensive account status (charges/payouts enabled)
+- [ ] Add webhook health monitoring dashboard
+- [ ] Implement error recovery flows
+- [ ] Test full onboarding with Stripe test account
+**Status:** Basic UI exists, needs completion
+
+#### FRONT-B4: Wizard Flow Completion (4h) - Sprint 2 🔴
+```
+/apps/web/src/app/(app)/wizard/page.tsx
+```
+- [ ] Fix TODO: Get userId from auth session (line 176)
+- [ ] Improve fallback UX for no slots available
+- [ ] Add "back" button between steps
+- [ ] Test edge cases (service at capacity, API failures)
+**Status:** Works but has TODO and missing edge cases
+
+#### FRONT-B5: Reports Page Enhancement (6h) - Sprint 3 🟢
+```
+/apps/web/src/app/(app)/reports/page.tsx
+```
+- [ ] Add no-show rate metric
+- [ ] Add therapist utilization metric
+- [ ] Implement export to CSV
+- [ ] Add print-friendly view
+- [ ] Date range presets (This Week, This Month, etc.)
+**Status:** Basic page exists, needs enhancements
+
+#### FRONT-B6: Notification Templates Editor (8h) - Sprint 3 🟢
+```
+/apps/web/src/app/(app)/notifications/page.tsx
+```
+- [ ] Integrate rich text editor (TipTap/Quill)
+- [ ] Add preview pane with sample data
+- [ ] Create variable picker ({{clientName}}, etc.)
+- [ ] Implement "Send Test Email" functionality
+**Status:** Templates list exists, needs rich editor
+
+#### FRONT-B7: Marketplace Enhancement (5h) - Sprint 3 🟢
+```
+/apps/web/src/app/(app)/marketplace/page.tsx
+```
+- [ ] Add location-based search
+- [ ] Add service type and price filters
+- [ ] Consider map view integration
+- [ ] Add "Featured Clinics" section
+**Status:** Basic marketplace exists with fallback data
+
+#### FRONT-B8: Client Portal Enhancement (8h) - Sprint 3 🟢
+```
+/apps/web/src/app/(app)/client/*
+```
+- [ ] Create client dashboard route
+- [ ] Show upcoming appointments
+- [ ] Enable self-service cancel/reschedule
+- [ ] Show credits balance
+- [ ] Download appointment receipts
+**Status:** CLIENT role exists but minimal UI
+
+**Total Track B: 46 horas**
+
+---
+
+### 🟢 ORIGINAL B - NICE TO HAVE (Mantener como C)
+
+#### B-Legacy-1: Emails Transaccionales (3h) - D6
 - [ ] Template: Bienvenida workspace
 - [ ] Template: Confirmación de reserva
 - [ ] Template: Recordatorio de cita
 - [ ] Template: Pago recibido
 
-#### B2: Calendario Visual (4h) - D6
+#### B-Legacy-2: Calendario Visual (4h) - D6
 ```
 /apps/web/src/app/(dashboard)/calendar/page.tsx
 ```
@@ -168,7 +259,7 @@
 - [ ] Arrastrar para crear cita
 - [ ] Color por terapeuta/servicio
 
-#### B3: Gestión de Clientes (3h) - D6
+#### B-Legacy-3: Gestión de Clientes (3h) - D6
 ```
 /apps/web/src/app/(dashboard)/clients/page.tsx
 ```
@@ -176,7 +267,7 @@
 - [ ] Filtrar por membresía activa
 - [ ] Exportar CSV
 
-#### B4: Reportes Básicos (4h) - D7
+#### B-Legacy-4: Reportes Básicos (4h) - D7
 ```
 /apps/web/src/app/(dashboard)/reports/page.tsx
 ```
@@ -185,18 +276,18 @@
 - [ ] Tasa de ocupación
 - [ ] Exportar PDF
 
-#### B5: Settings del Workspace (3h) - D6
+#### B-Legacy-5: Settings del Workspace (3h) - D6
 - [ ] Logo y colores
 - [ ] Horarios de operación
 - [ ] Timezone
 - [ ] Notificaciones
 
-#### B6: Check-in Manual (2h) - D7
+#### B-Legacy-6: Check-in Manual (2h) - D7
 - [ ] Botón check-in en reserva
 - [ ] Escanear QR o buscar cliente
 - [ ] Confirmar asistencia
 
-**Total B: 19 horas**
+**Total B-Legacy: 19 horas**
 
 ---
 
@@ -214,6 +305,79 @@
 | C8 | Paquetes de sesiones | 4h |
 | C9 | Gift cards | 4h |
 | C10 | Referral program | 6h |
+
+---
+
+## 📊 SPRINT PLANNING - POST MVP
+
+### Sprint 2 (Integraciones Críticas) - 19 horas
+**Foco:** Completar funcionalidades existentes que usan mock data
+
+| Ticket | Descripción | Horas | Prioridad |
+|--------|-------------|-------|-----------|
+| FRONT-B1 | Admin Reservations Backend Integration | 6h | 🔴 Alta |
+| FRONT-B3 | Stripe Connect Onboarding Completion | 5h | 🔴 Alta |
+| FRONT-B4 | Wizard Auth Integration Fix | 4h | 🔴 Alta |
+| FRONT-B2 | Dashboard Charts Real Data | 4h | 🟡 Media |
+
+**Dependencias:**
+- Backend: Verificar endpoints `/api/v1/reservations` con filtros
+- Backend: Analytics endpoints `/api/v1/analytics/*`
+- Stripe: Webhook verification setup
+
+### Sprint 3 (Mejoras UX) - 27 horas
+**Foco:** Enhancements de experiencia de usuario
+
+| Ticket | Descripción | Horas | Prioridad |
+|--------|-------------|-------|-----------|
+| FRONT-B6 | Notification Templates Rich Editor | 8h | 🟢 Media |
+| FRONT-B8 | Client Self-Service Portal | 8h | 🟢 Media |
+| FRONT-B5 | Reports Page Enhancement | 6h | 🟢 Baja |
+| FRONT-B7 | Marketplace Search & Filters | 5h | 🟢 Baja |
+
+**Dependencias:**
+- Backend: Analytics metrics (no-show rate, utilization)
+- Backend: Client-facing endpoints
+- Considerar: Rich text editor library (TipTap vs Quill)
+
+### Backlog (Nice to Have) - Movido a C
+
+| ID | Tarea | Horas |
+|----|-------|-------|
+| C1 | PWA móvil | 8h |
+| C2 | Google Calendar sync | 4h |
+| C3 | Multi-sucursal | 6h |
+| C4 | Inventario de productos | 4h |
+| C5 | POS físico | 8h |
+| C6 | WhatsApp notifications | 4h |
+| C7 | Waitlist para clases llenas | 3h |
+| C8 | Paquetes de sesiones | 4h |
+| C9 | Gift cards | 4h |
+| C10 | Referral program | 6h |
+
+---
+
+## 📋 TICKETS FRONTEND TRACK-B
+
+**Location:** `/docs/tickets/FRONT-B*.md`
+
+| Ticket | Title | Status | Files |
+|--------|-------|--------|-------|
+| [FRONT-B1](../docs/tickets/FRONT-B1.md) | Admin Reservations Management | TODO | admin/reservations-management/page.tsx |
+| [FRONT-B2](../docs/tickets/FRONT-B2.md) | Dashboard-Improved Charts | TODO | dashboard-improved/page.tsx |
+| [FRONT-B3](../docs/tickets/FRONT-B3.md) | Stripe Connect Onboarding | TODO | settings/payments/page.tsx |
+| [FRONT-B4](../docs/tickets/FRONT-B4.md) | Wizard Flow Completion | TODO | wizard/page.tsx |
+| [FRONT-B5](../docs/tickets/FRONT-B5.md) | Reports Page Enhancement | TODO | reports/page.tsx |
+| [FRONT-B6](../docs/tickets/FRONT-B6.md) | Notification Templates Editor | TODO | notifications/page.tsx |
+| [FRONT-B7](../docs/tickets/FRONT-B7.md) | Marketplace Enhancement | TODO | marketplace/page.tsx |
+| [FRONT-B8](../docs/tickets/FRONT-B8.md) | Client Portal Enhancement | TODO | client/* (new routes) |
+
+**Audit Findings Summary:**
+- ⚠️ 3 pages with complete mock data (admin/reservations, dashboard-improved, waitlist)
+- ⚠️ 1 TODO for auth session integration (wizard)
+- ⚠️ 2 pages needing enhancement (reports, notifications)
+- ⚠️ 2 areas for UX improvement (marketplace, client portal)
+- ✅ 5 pages production-ready (dashboard, day-sheet, services, wallet mock structure, checkout)
 
 ---
 
