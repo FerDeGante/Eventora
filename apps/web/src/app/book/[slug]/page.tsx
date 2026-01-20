@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 
 // ============================================
 // TYPES
@@ -340,6 +341,8 @@ const ClockIcon = () => (
 export default function BookingWidget() {
   const params = useParams();
   const slug = params.slug as string;
+  const trackUx = useUxMetrics("booking_widget");
+  const hasTrackedBookingStart = useRef(false);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(true);
@@ -535,6 +538,17 @@ export default function BookingWidget() {
 
       // If requires payment, redirect to checkout
       if (data.requiresPayment && data.amount > 0) {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(
+            `eventora-booking-meta:${data.id}`,
+            JSON.stringify({
+              clinicId: clinic.id,
+              serviceId: selectedService.id,
+              slotStartAt: selectedSlot.start,
+              bookingStartedAt: new Date().toISOString(),
+            }),
+          );
+        }
         window.location.href = `/book/${slug}/checkout?booking=${data.id}`;
         return;
       }
@@ -608,7 +622,18 @@ export default function BookingWidget() {
                     <div
                       key={service.id}
                       style={styles.serviceCard(selectedService?.id === service.id)}
-                      onClick={() => setSelectedService(service)}
+                      onClick={() => {
+                        setSelectedService(service);
+                        if (!hasTrackedBookingStart.current && clinic) {
+                          trackUx("action", {
+                            event: "booking_started",
+                            clinicId: clinic.id,
+                            serviceId: service.id,
+                            eventAt: new Date().toISOString(),
+                          });
+                          hasTrackedBookingStart.current = true;
+                        }
+                      }}
                     >
                       <div style={styles.serviceName}>{service.name}</div>
                       {service.description && (
@@ -712,7 +737,20 @@ export default function BookingWidget() {
                         <div
                           key={i}
                           style={styles.timeSlot(selectedSlot === slot, slot.available)}
-                          onClick={() => slot.available && setSelectedSlot(slot)}
+                          onClick={() => {
+                            if (!slot.available) return;
+                            setSelectedSlot(slot);
+                            if (clinic && selectedService) {
+                              trackUx("action", {
+                                event: "slot_selected",
+                                clinicId: clinic.id,
+                                serviceId: selectedService.id,
+                                slotStartAt: slot.start,
+                                slotEndAt: slot.end,
+                                eventAt: new Date().toISOString(),
+                              });
+                            }
+                          }}
                         >
                           {formatTime(slot.start)}
                         </div>
