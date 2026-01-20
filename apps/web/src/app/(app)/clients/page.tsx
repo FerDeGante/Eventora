@@ -158,22 +158,30 @@ export default function ClientsPage() {
       <section className="clients-list">
         {isLoading && (
           <div className="clients-loading">
+            <div className="loading-spinner"></div>
             <p>Cargando clientes...</p>
           </div>
         )}
 
         {error && (
           <GlowCard>
-            <p className="clients-error">Error al cargar clientes. Intenta de nuevo.</p>
+            <div className="clients-error">
+              <div className="error-icon">⚠️</div>
+              <p>Error al cargar clientes. Intenta de nuevo.</p>
+            </div>
           </GlowCard>
         )}
 
         {!isLoading && !error && clients.length === 0 && (
           <GlowCard>
             <div className="clients-empty">
-              <User size={48} />
-              <p>No hay clientes registrados</p>
+              <div className="empty-icon">
+                <User size={64} />
+              </div>
+              <h3>No hay clientes aún</h3>
+              <p>Comienza agregando tu primer cliente para gestionar reservas y membresías</p>
               <EventoraButton onClick={() => setIsModalOpen(true)}>
+                <Plus size={18} />
                 Agregar primer cliente
               </EventoraButton>
             </div>
@@ -395,16 +403,68 @@ export default function ClientsPage() {
           color: var(--text-muted);
         }
 
+        .clients-empty h3 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .clients-empty p {
+          font-size: 1rem;
+          color: var(--text-secondary);
+          max-width: 400px;
+          margin: 0;
+        }
+
+        .empty-icon {
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+          border-radius: 50%;
+          padding: 1.5rem;
+          color: white;
+          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .loading-spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid var(--border-subtle);
+          border-top-color: var(--accent-primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
         .clients-error {
-          color: var(--error);
-          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
           padding: 2rem;
+          text-align: center;
+        }
+
+        .clients-error p {
+          margin: 0;
+          color: var(--error);
+        }
+
+        .error-icon {
+          font-size: 3rem;
         }
 
         .client-card {
           display: flex;
           gap: 1rem;
           align-items: flex-start;
+          transition: transform 0.2s;
+        }
+
+        .client-card:hover {
+          transform: translateY(-2px);
         }
 
         .client-card__avatar {

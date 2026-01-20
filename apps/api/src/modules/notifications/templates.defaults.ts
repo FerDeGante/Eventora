@@ -430,7 +430,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
       
       <div style="background:#ecfdf5;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;border:1px solid #a7f3d0;">
         <span style="color:#71717a;font-size:13px;">MONTO PAGADO</span>
-        <h3 style="margin:8px 0 0;font-size:36px;font-weight:800;color:#059669;">${{amount}} {{currency}}</h3>
+        <h3 style="margin:8px 0 0;font-size:36px;font-weight:800;color:#059669;">$\{{amount}} {{currency}}</h3>
       </div>
       
       <div style="background:#f4f4f5;border-radius:12px;padding:20px;margin-bottom:24px;">
@@ -554,3 +554,4 @@ export const DEFAULT_NOTIFICATION_TEMPLATES = [
     `),
     text: "¡Membresía activada!\n\nHola {{name}}, tu membresía {{membershipName}} está activa.\n\nTipo: {{membershipType}}\nVálido hasta: {{expiresAt}}\nBeneficios: {{benefits}}\n\nReserva: {{bookingLink}}",
   },
+];

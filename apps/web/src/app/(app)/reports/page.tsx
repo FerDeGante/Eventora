@@ -185,9 +185,15 @@ export default function ReportsPage() {
             </div>
             <div className="chart-card__content">
               {loadingServices ? (
-                <p className="chart-loading">Cargando...</p>
+                <div className="chart-loading">
+                  <div className="loading-spinner-sm"></div>
+                  <p>Cargando...</p>
+                </div>
               ) : topServices.length === 0 ? (
-                <p className="chart-empty">No hay datos para el periodo seleccionado</p>
+                <div className="chart-empty">
+                  <div className="empty-icon-sm">📊</div>
+                  <p>No hay datos para el periodo seleccionado</p>
+                </div>
               ) : (
                 <div className="service-ranking">
                   {topServices.map((service, index) => (
@@ -223,9 +229,15 @@ export default function ReportsPage() {
             </div>
             <div className="chart-card__content">
               {loadingOccupancy ? (
-                <p className="chart-loading">Cargando...</p>
+                <div className="chart-loading">
+                  <div className="loading-spinner-sm"></div>
+                  <p>Cargando...</p>
+                </div>
               ) : occupancy.length === 0 ? (
-                <p className="chart-empty">No hay datos para el periodo seleccionado</p>
+                <div className="chart-empty">
+                  <div className="empty-icon-sm">🏢</div>
+                  <p>No hay datos para el periodo seleccionado</p>
+                </div>
               ) : (
                 <div className="occupancy-list">
                   {occupancy.map((branch) => (
@@ -395,9 +407,31 @@ export default function ReportsPage() {
 
         .chart-loading,
         .chart-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
           text-align: center;
           color: var(--text-muted);
           padding: 2rem;
+        }
+
+        .loading-spinner-sm {
+          width: 32px;
+          height: 32px;
+          border: 3px solid var(--border-subtle);
+          border-top-color: var(--accent-primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .empty-icon-sm {
+          font-size: 2rem;
+          opacity: 0.5;
         }
 
         .service-ranking {

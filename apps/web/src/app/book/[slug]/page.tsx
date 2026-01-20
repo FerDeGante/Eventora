@@ -377,7 +377,7 @@ export default function BookingWidget() {
   const [bookingId, setBookingId] = useState<string | null>(null);
 
   // API base
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
   // Load clinic and services
   const loadInitialData = useCallback(async () => {

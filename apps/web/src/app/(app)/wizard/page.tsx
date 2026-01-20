@@ -215,26 +215,36 @@ export default function WizardPage() {
       <SectionHeading eyebrow="Eventora Booking Wizard" title="Reserva multisucursal al estilo Chrome/Gemini.">
         Wizard holográfico con Stripe, paquetes, POS y notificaciones Resend sincronizadas.
       </SectionHeading>
-      <ul className="wizard-steps">
-        {steps.map((item, index) => (
-          <li key={item.title} className={`wizard-step ${index === step ? "is-active" : index < step ? "is-complete" : ""}`}>
-            <span>{index + 1}</span>
-            <div>
-              <p>{item.title}</p>
-              <small>{item.description}</small>
-            </div>
-          </li>
-        ))}
-      </ul>
+      
+      {/* Progreso visual mejorado */}
+      <div className="wizard-progress-container">
+        <ul className="wizard-steps">
+          {steps.map((item, index) => (
+            <li key={item.title} className={`wizard-step ${index === step ? "is-active" : index < step ? "is-complete" : ""}`}>
+              <div className="wizard-step-indicator">
+                <span className="wizard-step-number">{index + 1}</span>
+                {index < step && <span className="wizard-step-check">✓</span>}
+              </div>
+              <div className="wizard-step-content">
+                <p className="wizard-step-title">{item.title}</p>
+                <small className="wizard-step-description">{item.description}</small>
+              </div>
+              {index < steps.length - 1 && <div className="wizard-step-connector" />}
+            </li>
+          ))}
+        </ul>
+      </div>
+      
       <div className="wizard-grid">
         <section className="wizard-panel glass-panel">
           {step === 0 && (
             <>
               <p className="wizard-panel__title">Selecciona una sucursal</p>
               {(branchesLoading || branchesError) && (
-                <p className="wizard-status">
-                  {branchesLoading ? "Sincronizando sucursales..." : "Usando catálogo local por ahora"}
-                </p>
+                <div className="wizard-status">
+                  {branchesLoading && <div className="loading-spinner-sm"></div>}
+                  <p>{branchesLoading ? "Sincronizando sucursales..." : "Usando catálogo local por ahora"}</p>
+                </div>
               )}
               <div className="wizard-options">
                 {branches.map((branch: PublicBranch) => (
@@ -254,9 +264,10 @@ export default function WizardPage() {
             <>
               <p className="wizard-panel__title">Elige el servicio</p>
               {(servicesLoading || servicesError) && (
-                <p className="wizard-status">
-                  {servicesLoading ? "Cargando catálogo Eventora..." : "Mostrando servicios guardados"}
-                </p>
+                <div className="wizard-status">
+                  {servicesLoading && <div className="loading-spinner-sm"></div>}
+                  <p>{servicesLoading ? "Cargando catálogo Eventora..." : "Mostrando servicios guardados"}</p>
+                </div>
               )}
               <div className="wizard-options">
                 {services.map((service: PublicService) => (
@@ -277,7 +288,12 @@ export default function WizardPage() {
               <p className="wizard-panel__title">Escoge horario y terapeuta</p>
               {(!selectedBranch || !selectedService) && (
                 <p className="wizard-status">Selecciona sucursal y servicio para ver disponibilidad.</p>
-              )}
+              )}(
+                <div className="wizard-status">
+                  <div className="loading-spinner-sm"></div>
+                  <p>Calculando disponibilidad IA...</p>
+                </div>
+              )
               {slotsLoading && <p className="wizard-status">Calculando disponibilidad IA...</p>}
               {slotsError && <p className="wizard-status">Mostrando horarios de referencia.</p>}
               <div className="wizard-slots">

@@ -44,7 +44,21 @@ dotenv.config();
 // Initialize Sentry
 initSentry();
 
-const app = Fastify({ logger });
+const app = Fastify({ 
+  logger: env.NODE_ENV === "development" 
+    ? {
+        level: env.LOG_LEVEL,
+        transport: {
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
+          },
+        },
+      }
+    : true
+});
 
 const registerPlugins = async () => {
   await app.register(securityPlugin);
