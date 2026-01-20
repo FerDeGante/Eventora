@@ -1,0 +1,217 @@
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rem 3rem 6rem;
+  background: var(--evt-gradient-cosmos);
+  overflow: hidden;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  max-width: 1100px;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 100px;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  background: var(--evt-primary);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.badgeText {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--evt-primary);
+  letter-spacing: 0;
+}
+
+/* Title - estilo Eventora */
+.title {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--evt-text);
+  margin: 0 0 2.5rem;
+  letter-spacing: -0.02em;
+  animation: fadeIn 1s ease-out 0.1s both;
+}
+
+.titleGradient {
+  background: var(--evt-gradient-aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* Description */
+.description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--evt-text-secondary);
+  margin: 0 auto 3rem;
+  max-width: 680px;
+  animation: fadeIn 1s ease-out 0.2s both;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 4rem;
+  animation: fadeIn 1s ease-out 0.3s both;
+}
+
+.primaryButton {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--evt-text);
+  background: var(--evt-gradient-aurora);
+  text-decoration: none;
+  padding: 0.875rem 2rem;
+  border-radius: 100px;
+  transition: all 0.15s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: var(--shadow-aurora);
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
+}
+
+.secondaryButton {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--evt-text);
+  text-decoration: none;
+  padding: 0.875rem 2rem;
+  border-radius: 100px;
+  border: 1px solid var(--evt-border);
+  transition: all 0.15s ease;
+  background: var(--evt-bg-elevated);
+  cursor: pointer;
+  display: inline-block;
+}
+
+.secondaryButton:hover {
+  background: var(--evt-bg-alt);
+  border-color: var(--evt-primary);
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5rem;
+  animation: fadeIn 1s ease-out 0.4s both;
+}
+
+.stat {
+  text-align: center;
+}
+
+.statValue {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--evt-text);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--evt-text-muted);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero {
+    padding: 7rem 1.5rem 4rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .description {
+    font-size: 1rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}

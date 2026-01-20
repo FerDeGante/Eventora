@@ -1,0 +1,267 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  # Determine environment
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+  # Run CI first
+  ci:
+    name: CI Check
+    uses: ./.github/workflows/ci.yml
+
+  # Build Docker images
+  build-images:
+    name: Build Images
+    runs-on: ubuntu-latest
+    needs: [setup, ci]
+    environment: ${{ needs.setup.outputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Web
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/web:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/web:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.API_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy API
+  deploy-api:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    needs: [setup, build-images]
+    environment: ${{ needs.setup.outputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Option 1: Fly.io
+      - name: Deploy to Fly.io
+        if: vars.DEPLOY_PLATFORM == 'fly'
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Fly Deploy
+        if: vars.DEPLOY_PLATFORM == 'fly'
+        run: flyctl deploy --app ${{ vars.FLY_APP_API }} --image ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # Option 2: Railway
+      - name: Deploy to Railway
+        if: vars.DEPLOY_PLATFORM == 'railway'
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: api
+
+      # Option 3: Generic webhook
+      - name: Trigger Deploy Webhook
+        if: vars.DEPLOY_PLATFORM == 'webhook'
+        run: |
+          curl -X POST "${{ secrets.DEPLOY_WEBHOOK_API }}" \
+            -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"image": "ghcr.io/${{ github.repository }}/api:${{ github.sha }}"}'
+
+  # Deploy Web
+  deploy-web:
+    name: Deploy Web
+    runs-on: ubuntu-latest
+    needs: [setup, build-images]
+    environment: ${{ needs.setup.outputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Option 1: Vercel
+      - name: Deploy to Vercel
+        if: vars.DEPLOY_PLATFORM == 'vercel'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: ${{ needs.setup.outputs.environment == 'production' && '--prod' || '' }}
+
+      # Option 2: Netlify (already configured via netlify.toml)
+      - name: Deploy to Netlify
+        if: vars.DEPLOY_PLATFORM == 'netlify'
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './apps/web/.next'
+          production-deploy: ${{ needs.setup.outputs.environment == 'production' }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  # Run migrations
+  migrate:
+    name: Run Migrations
+    runs-on: ubuntu-latest
+    needs: [setup, deploy-api]
+    environment: ${{ needs.setup.outputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: pnpm prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Smoke tests
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [setup, deploy-api, deploy-web, migrate]
+    environment: ${{ needs.setup.outputs.environment }}
+
+    steps:
+      - name: Health check API
+        run: |
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.API_URL }}/health")
+            if [[ "$STATUS" == "200" ]]; then
+              echo "✅ API is healthy"
+              exit 0
+            fi
+            echo "Waiting for API... (attempt $i)"
+            sleep 10
+          done
+          echo "❌ API health check failed"
+          exit 1
+
+      - name: Health check Web
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.WEB_URL }}")
+          if [[ "$STATUS" == "200" ]]; then
+            echo "✅ Web is healthy"
+          else
+            echo "❌ Web health check failed: $STATUS"
+            exit 1
+          fi
+
+  # Notify
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [setup, smoke-test]
+    if: always()
+
+    steps:
+      - name: Notify Slack
+        if: vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "${{ needs.smoke-test.result == 'success' && '✅' || '❌' }} Deploy to ${{ needs.setup.outputs.environment }}: ${{ needs.smoke-test.result }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Eventora Deploy*\n• Environment: `${{ needs.setup.outputs.environment }}`\n• Status: ${{ needs.smoke-test.result }}\n• Commit: `${{ github.sha }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+
+      - name: Create Sentry Release
+        if: needs.smoke-test.result == 'success'
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          environment: ${{ needs.setup.outputs.environment }}
+          version: ${{ github.sha }}
+        continue-on-error: true

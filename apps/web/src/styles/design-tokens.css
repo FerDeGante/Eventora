@@ -1,0 +1,58 @@
+:root {
+  --font-display: var(--font-sora);
+  --font-body: var(--font-inter);
+
+  --color-primary: #60bac2;
+  --color-secondary: #cca8d6;
+  --color-accent: #e6a376;
+  --color-neutral: #f7faff;
+  --color-dark: #05060a;
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 30px 80px rgba(6, 15, 48, 0.35);
+
+  --gradient-aurora: linear-gradient(120deg, #aee6e8, #e7bbee 60%, #e6a376);
+  --gradient-night: radial-gradient(circle at 20% 20%, rgba(96,186,194,0.35), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(230,163,118,0.25), transparent 45%),
+    #05060a;
+
+  --stroke-soft: rgba(255, 255, 255, 0.14);
+  --text-strong: #f8fbff;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --text-soft: rgba(255, 255, 255, 0.5);
+}
+
+html[data-theme="light"] {
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(5, 16, 20, 0.06);
+  --glass-shadow: 0 30px 80px rgba(11, 18, 26, 0.1);
+  --gradient-night: linear-gradient(145deg, #f8fbff, #fef3f0);
+  --text-strong: #051014;
+  --text-muted: rgba(5, 16, 20, 0.75);
+  --text-soft: rgba(5, 16, 20, 0.6);
+}
+
+.bloom-grid {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 80px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 80px);
+  mask-image: radial-gradient(circle at center, white, transparent 70%);
+}
+
+.motion-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}

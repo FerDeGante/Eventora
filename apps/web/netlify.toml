@@ -1,0 +1,25 @@
+# netlify.toml - Configuración de Netlify
+# IMPORTANTE: Este archivo NO debe contener secretos.
+# Configura las variables de entorno en el dashboard de Netlify:
+# https://app.netlify.com/sites/YOUR_SITE/settings/env
+
+[build]
+  # 1) Generar el Prisma Client, 2) Compilar Next.js
+  command = "npm run generate && npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Las variables de entorno se configuran en:
+# Netlify Dashboard > Site Settings > Environment Variables
+#
+# Variables requeridas:
+# - NEXTAUTH_URL (ej: https://your-site.netlify.app)
+# - NEXTAUTH_SECRET (generar con: openssl rand -base64 32)
+# - NEXT_PUBLIC_APP_BASE (mismo que NEXTAUTH_URL)
+# - DATABASE_URL (connection string de Neon con pooler)
+# - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (pk_live_* o pk_test_*)
+# - STRIPE_SECRET (sk_live_* o sk_test_*)
+#
+# Ver .env.example en la raíz del proyecto para la lista completa

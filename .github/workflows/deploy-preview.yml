@@ -1,0 +1,88 @@
+name: Deploy Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview to Netlify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build web app
+        run: npm run build --workspace apps/web
+        env:
+          # Use preview environment variables
+          NEXT_PUBLIC_APP_BASE: ${{ secrets.PREVIEW_APP_BASE }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.PREVIEW_API_URL }}
+          NEXT_PUBLIC_CLINIC_ID: ${{ secrets.PREVIEW_CLINIC_ID }}
+          DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+          NEXTAUTH_URL: ${{ secrets.PREVIEW_NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.PREVIEW_NEXTAUTH_SECRET }}
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './apps/web/.next'
+          production-deploy: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy Preview for PR #${{ github.event.number }}"
+          alias: pr-${{ github.event.number }}
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://pr-${prNumber}--${process.env.NETLIFY_SITE_ID}.netlify.app`;
+            
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Deploy Preview Ready!\n\n✅ Preview: ${previewUrl}\n\n*Deployed from commit ${context.sha.substring(0, 7)}*`
+            });
+
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Lighthouse
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            https://pr-${{ github.event.number }}--${{ secrets.NETLIFY_SITE_ID }}.netlify.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true

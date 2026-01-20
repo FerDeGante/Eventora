@@ -1,4 +1,4 @@
-# Bloom Multi-Tenant Architecture Plan
+# Eventora Multi-Tenant Architecture Plan
 
 ## Objectives
 - Support multi-clinic (tenant) isolation with shared Next.js + Node.js stack.
