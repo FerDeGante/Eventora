@@ -96,8 +96,8 @@
 - [T-0011] Credenciales productivas + RLS PostgreSQL — 🔴 pendiente (ops)
 - [T-0012] Guardrails RBAC en UI + rutas protegidas — 🔴 pendiente
 - [T-0013] Instrumentación KPI en booking → checkout → check-in — 🔴 pendiente
-- [T-0014] Booking widget + checkout alineados a Design System — 🔴 pendiente
-- [T-0015] Copy landing: clase vs sesión + time-to-cash — 🔴 pendiente
+- [T-0014] Booking widget + checkout alineados a Design System — ✅
+- [T-0015] Copy landing: clase vs sesión + time-to-cash — ✅
 - [T-0016] Calendario con FullCalendar + densidad legible — 🔴 pendiente
 - Rotar credenciales producción: Supabase, Stripe, Resend, MercadoPago, JWT_SECRET (acción usuario, parte de T-0011)
 
@@ -117,8 +117,8 @@
 | T-0017 | Resolver vulnerabilidades npm (1 crítica RCE) | 🔴 P0 | DONE |
 | T-0012 | Guardrails RBAC en UI + rutas protegidas | 🟡 P1 | DONE |
 | T-0013 | Instrumentación KPI en booking → checkout → check-in | 🟡 P1 | DONE |
-| T-0014 | Booking widget + checkout alineados a Design System | 🟡 P1 | TODO |
-| T-0015 | Copy landing: clase vs sesión + time-to-cash | 🟡 P1 | TODO |
+| T-0014 | Booking widget + checkout alineados a Design System | 🟡 P1 | DONE |
+| T-0015 | Copy landing: clase vs sesión + time-to-cash | 🟡 P1 | DONE |
 | T-0016 | Calendario con FullCalendar + densidad legible | 🟡 P1 | TODO |
 
 ### Frontend - Prioridad P0 (CRÍTICO - Bloquea Launch)
@@ -163,8 +163,8 @@
 | B1 | RLS policies y test script | T-0011 | 2h | Defense-in-depth opcional si no se activa en A3 |
 | B2 | Mejorar onboarding de clínicas (copias/UX) | - | 3h | No bloqueante |
 | B3 | Instrumentación KPI booking/checkout/check-in | T-0013 | 3h | Medición time-to-cash/no-show |
-| B4 | Booking + checkout alineados a Design System | T-0014 | 6h | Apple-like consistente |
-| B5 | Copy landing clase/sesión + time-to-cash | T-0015 | 2h | Claridad de nicho |
+| B4 | Booking + checkout alineados a Design System | T-0014 | 6h | ✅ Apple-like consistente |
+| B5 | Copy landing clase/sesión + time-to-cash | T-0015 | 2h | ✅ Claridad de nicho |
 | B6 | FullCalendar + densidad legible | T-0016 | 6h | Operación más clara |
 
 ### 🟢 C — Deseables (Post-lanzamiento)

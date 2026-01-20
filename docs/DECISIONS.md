@@ -49,6 +49,31 @@ Instrumentar eventos UX mínimos (booking_started, slot_selected, checkout_start
 
 ---
 
+## 2026-01-21 — Booking/Checkout alineados a Design System (CSS Modules + tokens)
+
+**Contexto:**  
+Booking widget y checkout público usaban estilos inline con colores hardcoded y sin tokens del Design System, afectando consistencia y a11y.
+
+**Opciones consideradas:**
+1. Mantener estilos inline con ajustes puntuales (rechazado por deuda visual y foco)
+2. Migrar a CSS Modules con tokens y componentes base (elegido)
+
+**Decisión:**  
+Migrar booking y checkout a CSS Modules con tokens, usar `EventoraButton` y añadir estados/focus visibles consistentes.
+
+**Consecuencias:**
+- Consistencia visual Apple-like en funnel público
+- Mejor accesibilidad con focus visible y aria-labels
+- Mantenimiento más claro al separar estilos por módulo
+
+**Archivos modificados:**
+- `apps/web/src/app/book/[slug]/page.tsx`
+- `apps/web/src/app/book/[slug]/BookingWidget.module.css`
+- `apps/web/src/app/book/[slug]/checkout/page.tsx`
+- `apps/web/src/app/book/[slug]/Checkout.module.css`
+
+---
+
 ## 2026-01-19 — Security Hardening Pre-Launch
 
 **Contexto:**  
