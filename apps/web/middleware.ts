@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getRouteRuleForPath, shouldRedirectOnDenied } from "./src/lib/rbac";
 
 /**
  * Middleware de autenticación para Eventora
@@ -51,6 +52,7 @@ export function middleware(request: NextRequest) {
   // Verificar si el usuario tiene un token en cookies
   // (para compatibilidad futura con auth server-side)
   const authToken = request.cookies.get("eventora-auth-token")?.value;
+  const role = authToken ? extractRoleFromToken(authToken) : null;
   
   // Comprobar si es una ruta protegida
   const isProtectedRoute = PROTECTED_ROUTES.some(route => 
@@ -65,6 +67,13 @@ export function middleware(request: NextRequest) {
   // Si hay token y el usuario intenta acceder a login/register, redirigir a dashboard
   if (authToken && (pathname === "/login" || pathname === "/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  const routeRule = getRouteRuleForPath(pathname);
+  if (authToken && routeRule && role && !routeRule.roles.includes(role)) {
+    if (shouldRedirectOnDenied(role)) {
+      return NextResponse.redirect(new URL("/dashboard?denied=1", request.url));
+    }
   }
 
   // Crear respuesta base
@@ -93,6 +102,20 @@ export function middleware(request: NextRequest) {
   );
 
   return response;
+}
+
+function extractRoleFromToken(token: string) {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const json = atob(padded);
+    const data = JSON.parse(json) as { role?: string };
+    return data.role ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const config = {

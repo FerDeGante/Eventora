@@ -21,6 +21,8 @@ import {
 import { es } from "date-fns/locale";
 import { EventoraButton } from "@/app/components/ui/EventoraButton";
 import { getReservations, getTherapists, updateReservationStatus, createReservation, getServices, getBranches, type Reservation } from "@/lib/admin-api";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useUxMetrics } from "@/app/hooks/useUxMetrics";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -54,6 +56,8 @@ type NewReservationSlot = {
 
 export default function CalendarPage() {
   const queryClient = useQueryClient();
+  const auth = useAuth();
+  const trackUx = useUxMetrics("calendar");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [selectedTherapist, setSelectedTherapist] = useState<string>("");
@@ -98,8 +102,18 @@ export default function CalendarPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => updateReservationStatus(id, status),
-    onSuccess: () => {
+    mutationFn: ({ id, status }: { id: string; status: string; serviceId?: string }) =>
+      updateReservationStatus(id, status),
+    onSuccess: (_data, variables) => {
+      if (variables.status === "COMPLETED" || variables.status === "NO_SHOW") {
+        trackUx("action", {
+          event: variables.status === "COMPLETED" ? "checkin_completed" : "no_show_marked",
+          reservationId: variables.id,
+          clinicId: auth.user?.clinicId,
+          serviceId: variables.serviceId,
+          eventAt: new Date().toISOString(),
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       setSelectedReservation(null);
     },
@@ -128,7 +142,7 @@ export default function CalendarPage() {
 
   const handleStatusChange = (status: string) => {
     if (selectedReservation) {
-      statusMutation.mutate({ id: selectedReservation.id, status });
+      statusMutation.mutate({ id: selectedReservation.id, status, serviceId: selectedReservation.service?.id });
     }
   };
 
