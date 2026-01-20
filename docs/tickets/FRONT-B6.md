@@ -67,8 +67,49 @@ Libraries to consider:
 - Slate (highly customizable)
 
 Status:
-- Estado: TODO
+- Estado: DEFERRED
 - Fecha: 2026-01-20
+- Razón: Requiere instalación de dependencia externa (TipTap/Quill)
+- Prioridad: Sprint 3 (después de B4, B5, B7, B8)
+
+---
+
+## Implementation Plan (Detailed)
+
+### Step 1: Install Dependencies
+```bash
+npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-link
+```
+
+### Step 2: Create TemplateEditor Component
+- Rich text toolbar with bold, italic, underline, link
+- Variable insertion button
+- Character count
+- Save/Cancel buttons
+
+### Step 3: Create VariablePicker Component
+- Dropdown with all available variables
+- Description tooltips
+- Click to insert into editor at cursor position
+
+### Step 4: Create TemplatePreview Component
+- Render template with sample data
+- Side-by-side or toggle view
+- Mobile preview
+
+### Step 5: Integrate Test Send
+- Add "Send Test" button
+- Email input modal
+- Success/error notifications
+
+### Files to Create:
+- apps/web/src/app/components/notifications/TemplateEditor.tsx
+- apps/web/src/app/components/notifications/VariablePicker.tsx
+- apps/web/src/app/components/notifications/TemplatePreview.tsx
+
+### Backend Requirements:
+- POST /api/v1/notifications/templates/:id/test-send
+- GET /api/v1/notifications/variables
 
 ---
 

@@ -17,6 +17,7 @@ import {
 } from "@/lib/public-api";
 import { createCheckout } from "@/lib/admin-api";
 import { useUxMetrics } from "@/app/hooks/useUxMetrics";
+import { useAuth } from "@/app/hooks/useAuth";
 
 const fallbackWizard = {
   branches: [
@@ -81,6 +82,7 @@ function WizardContent() {
   const [coupon, setCoupon] = useState("");
   const searchParams = useSearchParams();
   const track = useUxMetrics("wizard");
+  const { user } = useAuth();
   const clinicSlug = searchParams.get("clinic") ?? undefined;
   const preselectBranch = searchParams.get("branchId") ?? undefined;
   const preselectService = searchParams.get("serviceId") ?? undefined;
@@ -171,9 +173,8 @@ function WizardContent() {
       if (!selectedService || !selectedSlot) {
         throw new Error("Selecciona servicio y horario");
       }
-      // Note: In production, userId should come from session
       const result = await createCheckout({
-        userId: "guest", // TODO: Get from auth session
+        userId: user?.id ?? "guest",
         mode: "reservation",
         amount: selectedService.price ? selectedService.price * 100 : 185000, // cents
         currency: "mxn",
@@ -296,27 +297,37 @@ function WizardContent() {
               <p className="wizard-panel__title">Escoge horario y terapeuta</p>
               {(!selectedBranch || !selectedService) && (
                 <p className="wizard-status">Selecciona sucursal y servicio para ver disponibilidad.</p>
-              )}(
+              )}
+              {slotsLoading && (
                 <div className="wizard-status">
                   <div className="loading-spinner-sm"></div>
                   <p>Calculando disponibilidad IA...</p>
                 </div>
-              )
-              {slotsLoading && <p className="wizard-status">Calculando disponibilidad IA...</p>}
-              {slotsError && <p className="wizard-status">Mostrando horarios de referencia.</p>}
-              <div className="wizard-slots">
-                {slots.map((slot: PublicSlot) => (
-                  <button
-                    key={slot.id}
-                    className={`wizard-slot ${selectedSlot?.id === slot.id ? "is-active" : ""}`}
-                    onClick={() => setSelectedSlot(slot)}
-                  >
-                    <p>{getSlotTime(slot)}</p>
-                    <span>{getSlotTherapist(slot)}</span>
-                    <small>{getSlotRoom(slot)}</small>
-                  </button>
-                ))}
-              </div>
+              )}
+              {!slotsLoading && slots.length === 0 && selectedBranch && selectedService && (
+                <div className="wizard-status wizard-status--warning">
+                  <p>⚠️ No hay horarios disponibles para hoy</p>
+                  <small>Prueba seleccionando otra sucursal o servicio, o intenta en otro día.</small>
+                </div>
+              )}
+              {slotsError && !slotsLoading && slots.length > 0 && (
+                <p className="wizard-status">Mostrando horarios de referencia.</p>
+              )}
+              {slots.length > 0 && (
+                <div className="wizard-slots">
+                  {slots.map((slot: PublicSlot) => (
+                    <button
+                      key={slot.id}
+                      className={`wizard-slot ${selectedSlot?.id === slot.id ? "is-active" : ""}`}
+                      onClick={() => setSelectedSlot(slot)}
+                    >
+                      <p>{getSlotTime(slot)}</p>
+                      <span>{getSlotTherapist(slot)}</span>
+                      <small>{getSlotRoom(slot)}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
             </>
           )}
           {step === 3 && (

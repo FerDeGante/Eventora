@@ -54,14 +54,41 @@ Backend Requirements (if not existing):
 - GET /api/v1/analytics/therapist-utilization
 
 UX Checks:
-- [ ] Date range presets (Today, This Week, This Month, Custom)
-- [ ] Loading indicators during data fetch
-- [ ] Clear axis labels on all charts
-- [ ] Tooltips with detailed info on hover
+- [x] Date range presets (Today, This Week, This Month, Custom)
+- [x] Loading indicators during data fetch
+- [x] Clear axis labels on all charts
+- [x] Tooltips with detailed info on hover
 
 Status:
-- Estado: TODO
+- Estado: DONE
 - Fecha: 2026-01-20
+
+---
+
+## Implementation Notes
+
+### Changes Made:
+1. ✅ Added improved date range presets (Today, Week, Month, Quarter, Year, Custom)
+2. ✅ Implemented CSV export functionality
+3. ✅ Added print-friendly view with media queries
+4. ✅ Export and Print buttons in UI
+5. ✅ Better responsive layout for actions
+6. ✅ CSV includes all key metrics and charts data
+
+### Files Modified:
+- apps/web/src/app/(app)/reports/page.tsx
+
+### Features Added:
+- Export to CSV with formatted data
+- Print button with print-optimized styles
+- Enhanced date range selector with 6 presets
+- Responsive action buttons
+- Loading states during export
+
+### Pending (Backend):
+- GET /api/v1/analytics/no-show-rate
+- GET /api/v1/analytics/therapist-utilization
+- GET /api/v1/reports/export (server-side export)
 
 ---
 

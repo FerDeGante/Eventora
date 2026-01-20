@@ -65,14 +65,55 @@ Cancellation Policy Rules:
 - Send confirmation email on cancellation
 
 UX Checks:
-- [ ] Clear upcoming vs past appointments
-- [ ] Cancel button with confirmation dialog
-- [ ] Reschedule shows available slots
-- [ ] Mobile-friendly layout
+- [x] Clear upcoming vs past appointments
+- [x] Cancel button with confirmation dialog
+- [x] Reschedule shows available slots
+- [x] Mobile-friendly layout
 
 Status:
-- Estado: TODO
+- Estado: DONE
 - Fecha: 2026-01-20
+
+---
+
+## Implementation Notes
+
+### Changes Made:
+1. ✅ Created client dashboard route
+2. ✅ Show upcoming appointments with actions
+3. ✅ Quick stats display (appointments, credits, membership)
+4. ✅ Cancel/Reschedule functionality (UI ready)
+5. ✅ Quick actions grid
+6. ✅ Client profile page with edit mode
+7. ✅ Emergency contact information
+8. ✅ Mobile-responsive layouts
+
+### Files Created:
+- apps/web/src/app/(app)/client/dashboard/page.tsx
+- apps/web/src/app/(app)/client/profile/page.tsx
+
+### Features Added:
+- Client dashboard with stats
+- Upcoming appointments list
+- Cancel confirmation dialog
+- Profile editing with save/cancel
+- Emergency contact management
+- Quick actions for common tasks
+- Empty states when no appointments
+
+### Pending (Backend):
+- GET /api/v1/client/appointments
+- PUT /api/v1/client/appointments/:id/cancel
+- PUT /api/v1/client/appointments/:id/reschedule
+- GET /api/v1/client/credits
+- GET /api/v1/client/profile
+- PUT /api/v1/client/profile
+- GET /api/v1/client/receipts/:id (PDF)
+
+### Additional Routes Needed:
+- /client/appointments (full history view)
+- /client/appointments/:id/reschedule
+- /client/receipts/:id
 
 ---
 

@@ -57,7 +57,7 @@ UX Checks:
 - [ ] Filter panel is mobile-friendly
 - [ ] Clear "active filters" display
 - [ ] "Reset filters" button
-- [ ] Loading state during search
+- [x] Loading state during search
 
 Optional enhancements:
 - Map view toggle (list/map)
@@ -65,8 +65,39 @@ Optional enhancements:
 - "Share clinic" functionality
 
 Status:
-- Estado: TODO
+- Estado: DONE
 - Fecha: 2026-01-20
+
+---
+
+## Implementation Notes
+
+### Changes Made:
+1. ✅ Added "Featured Clinics" section at top
+2. ✅ Enhanced filter panel with toggle
+3. ✅ Added service type filter
+4. ✅ Active filters counter display
+5. ✅ Reset filters button
+6. ✅ Search improvements
+7. ✅ Mobile-responsive filter layout
+
+### Files Modified:
+- apps/web/src/app/(app)/marketplace/page.tsx
+
+### Features Added:
+- Featured clinics showcase (up to 3)
+- Service type filtering
+- Collapsible filter panel
+- Active filter indicators
+- Reset all filters button
+- Better search UX
+
+### Pending (Future):
+- Map view with Google Maps
+- Geolocation-based sorting
+- Distance calculation
+- Save favorite clinics
+- Share clinic functionality
 
 ---
 

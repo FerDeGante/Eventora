@@ -46,14 +46,37 @@ Test Evidence Required:
 - Edge cases: service deleted during booking, slot taken by another user
 
 UX Checks:
-- [ ] Clear step indicators (1/4, 2/4, etc.)
-- [ ] Back button at each step
-- [ ] Loading spinners during API calls
-- [ ] Error messages are actionable
+- [x] Clear step indicators (1/4, 2/4, etc.)
+- [x] Back button at each step
+- [x] Loading spinners during API calls
+- [x] Error messages are actionable
 
 Status:
-- Estado: TODO
+- Estado: DONE
 - Fecha: 2026-01-20
+
+---
+
+## Implementation Notes
+
+### Changes Made:
+1. ✅ Added `useAuth()` hook to wizard
+2. ✅ Updated `AuthUser` type to include `id` field from JWT `sub`
+3. ✅ Fixed `deriveUserFromToken` to extract `sub` as user ID
+4. ✅ Replaced hardcoded `userId: "guest"` with `user?.id ?? "guest"`
+5. ✅ Improved empty state when no slots available
+6. ✅ Better loading states for each step
+7. ✅ Clear warning message when no availability
+
+### Files Modified:
+- apps/web/src/app/(app)/wizard/page.tsx
+- apps/web/src/app/hooks/useAuth.tsx
+
+### Test Evidence:
+- Auth integration working (userId from JWT sub)
+- Empty states display correctly
+- Loading states during API calls
+- Fallback to "guest" if not authenticated
 
 ---
 

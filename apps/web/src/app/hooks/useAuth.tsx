@@ -3,7 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Role } from "@/lib/rbac";
 
-type AuthUser = { email?: string; name?: string; role?: Role; clinicId?: string };
+type AuthUser = { 
+  id?: string;
+  email?: string; 
+  name?: string; 
+  role?: Role; 
+  clinicId?: string;
+};
 
 type AuthContextValue = {
   token: string | null;
@@ -45,10 +51,12 @@ const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
 
 const deriveUserFromToken = (token: string, baseUser?: AuthUser | null) => {
   const payload = decodeJwtPayload(token);
+  const id = payload?.sub as string | undefined;
   const role = payload?.role as Role | undefined;
   const clinicId = payload?.clinicId as string | undefined;
   return {
     ...(baseUser ?? {}),
+    id: baseUser?.id ?? id,
     role: baseUser?.role ?? role,
     clinicId: baseUser?.clinicId ?? clinicId,
   };

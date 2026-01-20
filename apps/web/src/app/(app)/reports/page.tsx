@@ -18,26 +18,34 @@ import {
   TrendingDown,
   BarChart2,
   Clock,
+  Download,
+  Printer,
 } from "react-feather";
 
-type DateRange = "7d" | "30d" | "90d" | "1y";
+type DateRange = "today" | "week" | "month" | "quarter" | "year" | "custom";
 
 function getDateRange(range: DateRange): { start: string; end: string } {
   const end = new Date();
   const start = new Date();
   
   switch (range) {
-    case "7d":
+    case "today":
+      start.setHours(0, 0, 0, 0);
+      break;
+    case "week":
       start.setDate(end.getDate() - 7);
       break;
-    case "30d":
-      start.setDate(end.getDate() - 30);
+    case "month":
+      start.setMonth(end.getMonth() - 1);
       break;
-    case "90d":
-      start.setDate(end.getDate() - 90);
+    case "quarter":
+      start.setMonth(end.getMonth() - 3);
       break;
-    case "1y":
+    case "year":
       start.setFullYear(end.getFullYear() - 1);
+      break;
+    case "custom":
+      // Will be handled by custom date inputs
       break;
   }
   
@@ -57,8 +65,9 @@ function formatCurrency(cents: number): string {
 }
 
 export default function ReportsPage() {
-  const [dateRange, setDateRange] = useState<DateRange>("30d");
+  const [dateRange, setDateRange] = useState<DateRange>("month");
   const { start, end } = getDateRange(dateRange);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: summary, isLoading: loadingSummary } = useQuery({
     queryKey: ["report-summary", start, end],
@@ -76,10 +85,51 @@ export default function ReportsPage() {
   });
 
   const rangeLabels: Record<DateRange, string> = {
-    "7d": "Últimos 7 días",
-    "30d": "Últimos 30 días",
-    "90d": "Últimos 90 días",
-    "1y": "Último año",
+    "today": "Hoy",
+    "week": "Esta semana",
+    "month": "Este mes",
+    "quarter": "Este trimestre",
+    "year": "Este año",
+    "custom": "Personalizado",
+  };
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Prepare CSV data
+      const csvData = [
+        ["Métrica", "Valor"],
+        ["Ingresos", formatCurrency(summary?.revenue.current ?? 0)],
+        ["Reservaciones", String(summary?.bookings.current ?? 0)],
+        ["Clientes activos", String(summary?.activeClients ?? 0)],
+        ["Membresías activas", String(summary?.activeMemberships ?? 0)],
+        [""],
+        ["Servicio", "Reservaciones", "Ingresos"],
+        ...topServices.map(s => [s.serviceName, String(s.bookings), formatCurrency(s.revenue)]),
+        [""],
+        ["Sucursal", "Reservaciones"],
+        ...occupancy.map(b => [b.branchName, String(b.reservations)]),
+      ];
+      
+      const csv = csvData.map(row => row.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `reporte-${dateRange}-${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -100,6 +150,27 @@ export default function ReportsPage() {
                 {rangeLabels[range]}
               </button>
             ))}
+          </div>
+          
+          <div className="reports-actions">
+            <button
+              className="action-btn"
+              onClick={handleExportCSV}
+              disabled={isExporting || loadingSummary}
+              title="Exportar a CSV"
+            >
+              <Download size={16} />
+              {isExporting ? "Exportando..." : "Exportar CSV"}
+            </button>
+            <button
+              className="action-btn"
+              onClick={handlePrint}
+              disabled={loadingSummary}
+              title="Imprimir reporte"
+            >
+              <Printer size={16} />
+              Imprimir
+            </button>
           </div>
         </div>
       </section>
@@ -275,12 +346,46 @@ export default function ReportsPage() {
 
         .reports-filters {
           margin-top: 1.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
         }
 
         .date-range-selector {
           display: flex;
           gap: 0.5rem;
           flex-wrap: wrap;
+        }
+
+        .reports-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border: 1px solid var(--border-subtle);
+          border-radius: 0.5rem;
+          background: var(--surface-elevated);
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .action-btn:hover:not(:disabled) {
+          border-color: var(--primary);
+          color: var(--primary);
+        }
+
+        .action-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .range-btn {
@@ -537,6 +642,44 @@ export default function ReportsPage() {
           .rank-bar-container,
           .occupancy-bar-container {
             width: 100%;
+          }
+
+          .reports-filters {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .reports-actions {
+            width: 100%;
+          }
+
+          .action-btn {
+            flex: 1;
+          }
+        }
+
+        /* Print styles */
+        @media print {
+          .reports-filters,
+          .reports-actions {
+            display: none;
+          }
+
+          .reports-page {
+            max-width: 100%;
+          }
+
+          .glass-panel {
+            border: 1px solid #ddd;
+            background: white;
+          }
+
+          .stat-card__icon {
+            display: none;
+          }
+
+          .chart-card {
+            break-inside: avoid;
           }
         }
       `}</style>
