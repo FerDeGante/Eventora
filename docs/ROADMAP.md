@@ -107,17 +107,42 @@
 
 ## 🎯 Tickets activos del sprint
 
+### Backend (T-series)
 | Ticket | Tarea | Estado |
 |--------|-------|--------|
 | T-0008 | Alinear README + ROADMAP | DONE |
 | T-0009 | Hardening RBAC y multi-tenant | DONE |
 | T-0010 | QA e2e + observabilidad | DONE |
-| T-0011 | Credenciales productivas + RLS PostgreSQL | TODO |
+| T-0011 | Credenciales productivas + RLS PostgreSQL | IN_PROGRESS |
 | T-0012 | Guardrails RBAC en UI + rutas protegidas | TODO |
 | T-0013 | Instrumentación KPI en booking → checkout → check-in | TODO |
 | T-0014 | Booking widget + checkout alineados a Design System | TODO |
 | T-0015 | Copy landing: clase vs sesión + time-to-cash | TODO |
 | T-0016 | Calendario con FullCalendar + densidad legible | TODO |
+
+### Frontend - Prioridad P0 (CRÍTICO - Bloquea Launch)
+| Ticket | Tarea | Días | Estado |
+|--------|-------|------|--------|
+| FRONT-A1 | Multi-Tenant Guards Frontend | 3 | TODO |
+| FRONT-A2 | RBAC Visual Completo | 4 | TODO |
+| FRONT-A3 | Check-in / Check-out Flow | 3 | TODO |
+| FRONT-A4 | Instrumentación KPIs (time-to-cash) | 2 | TODO |
+| FRONT-A5 | Frontdesk Day Sheet | 3 | TODO |
+| FRONT-A6 | Booking Wizard - Capacidad N (Clases) | 4 | TODO |
+| FRONT-A7 | Wallet / Credits Balance View | 3 | TODO |
+| FRONT-A8 | Waitlist Management | 3 | TODO |
+
+### Frontend - Prioridad P1 (Mejoras UX/DX)
+| Ticket | Tarea | Días | Estado |
+|--------|-------|------|--------|
+| FRONT-B1 | Design System Refactor | 5 | TODO |
+| FRONT-B2 | Calendar Refactor (1304 LOC → modular) | 5 | TODO |
+| FRONT-B3 | Optimistic Updates (React Query) | 2 | TODO |
+| FRONT-B4 | Microinteracciones (Framer Motion) | 2 | TODO |
+| FRONT-B5 | Accessibility Audit + Fixes | 3 | TODO |
+
+**Health Score:** 42/100 → Target: 85/100 post Sprint 3  
+**Ver detalles completos:** [audit/FRONTEND_EXECUTIVE_AUDIT.md](../audit/FRONTEND_EXECUTIVE_AUDIT.md)
 
 ---
 

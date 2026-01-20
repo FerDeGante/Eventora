@@ -1,5 +1,7 @@
 import { apiFetch } from "./api-client";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
 export type DashboardStat = { label: string; value: string; delta?: string };
 export type DashboardTimelineItem = {
   id: string;
